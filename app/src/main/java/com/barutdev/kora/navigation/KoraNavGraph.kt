@@ -40,11 +40,7 @@ fun KoraNavGraph(
     ) {
         composable(route = KoraDestination.StudentList.route) {
             StudentListScreen(
-                onNavigateToDashboard = {
-                    navController.navigate(KoraDestination.Dashboard.route) {
-                        launchSingleTop = true
-                    }
-                }
+                onAddStudent = {}
             )
         }
         composable(route = KoraDestination.Dashboard.route) {
