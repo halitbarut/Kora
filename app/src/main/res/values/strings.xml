@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Kora</string>
+    <string name="student_list_title">Student List Screen</string>
+    <string name="dashboard_title">Dashboard Screen</string>
+    <string name="calendar_title">Calendar Screen</string>
+    <string name="homework_title">Homework Screen</string>
+    <string name="settings_title">Settings Screen</string>
+    <string name="navigate_to_dashboard">Go to Dashboard</string>
+    <string name="navigate_to_settings">Go to Settings</string>
 </resources>
