@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tutor Management - My Students</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4A90E2",
+            "background-light": "#F7F9FC",
+            "background-dark": "#1a202c",
+            "text-light-primary": "#333333",
+            "text-light-secondary": "#7F8C8D",
+            "text-dark-primary": "#E2E8F0",
+            "text-dark-secondary": "#A0AEC0",
+            "card-light": "#FFFFFF",
+            "card-dark": "#2d3748",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "0.75rem",
+            "xl": "1rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative min-h-screen">
+<header class="bg-card-light dark:bg-card-dark shadow-sm sticky top-0 z-10">
+<div class="mx-auto max-w-md px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between">
+<h1 class="text-xl font-bold text-text-light-primary dark:text-text-dark-primary">My Students</h1>
+</div>
+</div>
+</header>
+<main class="absolute inset-0 flex items-center justify-center pt-16">
+<div class="text-center">
+<span class="material-symbols-outlined text-9xl" style="color: #B0BEC5;">
+          group
+        </span>
+<h2 class="mt-4 text-xl font-bold text-text-light-primary dark:text-text-dark-primary">Add Your First Student</h2>
+<p class="mt-1 text-sm text-text-light-secondary dark:text-text-dark-secondary">Tap the '+' button in the corner to get started.</p>
+</div>
+</main>
+<div class="fixed bottom-6 right-6">
+<button class="bg-primary text-white rounded-full h-16 w-16 flex items-center justify-center shadow-lg hover:bg-primary/90 transition">
+<span class="material-symbols-outlined text-3xl">
+          add
+        </span>
+</button>
+</div>
+</div>
+
+</body></html>
