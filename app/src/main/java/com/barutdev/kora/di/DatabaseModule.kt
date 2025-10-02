@@ -1,0 +1,43 @@
+package com.barutdev.kora.di
+
+import android.content.Context
+import androidx.room.Room
+import com.barutdev.kora.data.local.KoraDatabase
+import com.barutdev.kora.data.local.LessonDao
+import com.barutdev.kora.data.local.StudentDao
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+
+    private const val DATABASE_NAME = "kora.db"
+
+    @Provides
+    @Singleton
+    fun provideDatabase(
+        @ApplicationContext context: Context
+    ): KoraDatabase = Room.databaseBuilder(
+        context,
+        KoraDatabase::class.java,
+        DATABASE_NAME
+    ).fallbackToDestructiveMigration()
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideStudentDao(
+        database: KoraDatabase
+    ): StudentDao = database.studentDao()
+
+    @Provides
+    @Singleton
+    fun provideLessonDao(
+        database: KoraDatabase
+    ): LessonDao = database.lessonDao()
+}

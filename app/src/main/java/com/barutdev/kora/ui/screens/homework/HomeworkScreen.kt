@@ -12,7 +12,12 @@ import androidx.compose.ui.res.stringResource
 import com.barutdev.kora.R
 
 @Composable
-fun HomeworkScreen(modifier: Modifier = Modifier) {
+fun HomeworkScreen(
+    studentId: Int,
+    modifier: Modifier = Modifier
+) {
+    val unusedStudentId = studentId
+    // TODO: Replace placeholder content with real homework UI using studentId when available.
     Scaffold(modifier = modifier) { innerPadding ->
         Box(
             modifier = Modifier

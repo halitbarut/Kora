@@ -1,6 +1,7 @@
 package com.barutdev.kora.ui.screens.student_list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,15 +31,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
+import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.ui.screens.student_list.components.AddStudentDialog
 import com.barutdev.kora.ui.theme.KoraTheme
 import java.util.Locale
 
@@ -46,20 +51,36 @@ import java.util.Locale
 @Composable
 fun StudentListScreen(
     onAddStudent: () -> Unit,
-    modifier: Modifier = Modifier
+    onStudentClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: StudentListViewModel = hiltViewModel()
 ) {
+    val students by viewModel.students.collectAsStateWithLifecycle()
+    val showDialog by viewModel.showAddStudentDialog.collectAsStateWithLifecycle()
+
     StudentListScreenContent(
-        students = sampleStudentList,
-        onAddStudent = onAddStudent,
+        students = students,
+        onAddStudent = {
+            viewModel.onAddStudentClick()
+            onAddStudent()
+        },
+        onStudentClick = onStudentClick,
         modifier = modifier
+    )
+
+    AddStudentDialog(
+        showDialog = showDialog,
+        onDismiss = viewModel::onAddStudentDismiss,
+        onSave = viewModel::onSaveStudent
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StudentListScreenContent(
-    students: List<StudentUiModel>,
+    students: List<Student>,
     onAddStudent: () -> Unit,
+    onStudentClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -104,6 +125,7 @@ private fun StudentListScreenContent(
                 items(students) { student ->
                     StudentListItem(
                         student = student,
+                        onStudentClick = onStudentClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -146,11 +168,14 @@ private fun StudentListEmptyState(modifier: Modifier = Modifier) {
 
 @Composable
 fun StudentListItem(
-    student: StudentUiModel,
+    student: Student,
+    onStudentClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onStudentClick(student.id.toString()) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -172,7 +197,7 @@ fun StudentListItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = student.initials,
+                    text = student.initials(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -194,7 +219,7 @@ fun StudentListItem(
                 Text(
                     text = stringResource(
                         id = R.string.student_list_amount_due,
-                        student.amountDue
+                        student.formattedHourlyRate()
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -211,28 +236,10 @@ fun StudentListItem(
     }
 }
 
-@Immutable
-data class StudentUiModel(
-    val fullName: String,
-    val amountDue: String
-) {
-    val initials: String = fullName
-        .split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .joinToString(separator = "") { part ->
-            part.take(1).uppercase(Locale.getDefault())
-        }
-        .ifEmpty {
-            fullName.take(2).uppercase(Locale.getDefault())
-        }
-}
-
-private val sampleStudentList = listOf(
-    StudentUiModel(fullName = "Elif Yılmaz", amountDue = "360.00 TL"),
-    StudentUiModel(fullName = "Ahmet Demir", amountDue = "240.00 TL"),
-    StudentUiModel(fullName = "Ayşe Kaya", amountDue = "180.00 TL"),
-    StudentUiModel(fullName = "Mehmet Özcan", amountDue = "420.00 TL")
+private val previewStudents = listOf(
+    Student(id = 1, fullName = "Elif Yılmaz", hourlyRate = 360.0),
+    Student(id = 2, fullName = "Ahmet Demir", hourlyRate = 240.0),
+    Student(id = 3, fullName = "Ayşe Kaya", hourlyRate = 180.0)
 )
 
 @Preview(showBackground = true)
@@ -240,8 +247,9 @@ private val sampleStudentList = listOf(
 private fun StudentListScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
-            students = sampleStudentList,
-            onAddStudent = {}
+            students = previewStudents,
+            onAddStudent = {},
+            onStudentClick = {}
         )
     }
 }
@@ -251,9 +259,22 @@ private fun StudentListScreenPreview() {
 private fun StudentListEmptyScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
-            students = sampleStudentList,
-            onAddStudent = {}
+            students = emptyList(),
+            onAddStudent = {},
+            onStudentClick = {}
         )
     }
 }
-  
+
+private fun Student.initials(): String = fullName
+    .split(" ")
+    .filter { it.isNotBlank() }
+    .take(2)
+    .joinToString(separator = "") { part ->
+        part.take(1).uppercase(Locale.getDefault())
+    }
+    .ifEmpty {
+        fullName.take(2).uppercase(Locale.getDefault())
+    }
+
+private fun Student.formattedHourlyRate(): String = String.format(Locale.getDefault(), "%.2f TL", hourlyRate)
