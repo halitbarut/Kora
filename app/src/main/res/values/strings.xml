@@ -4,7 +4,7 @@
     <!-- Student List Screen -->
     <string name="student_list_title">My Students</string>
     <string name="student_list_empty_title">Add Your First Student</string>
-    <string name="student_list_empty_message">Tap the \'+\' button in the corner to get started.</string>
+    <string name="student_list_empty_message">Tap the + button in the corner to get started.</string>
     <string name="student_list_amount_due">Current amount due: %1$s</string>
     <string name="student_list_add_student_fab_content_description">Add new student</string>
     <string name="student_list_list_item_trailing_icon_content_description">View student details</string>
@@ -15,5 +15,44 @@
     <string name="homework_title">Homework</string>
     <string name="settings_title">Settings</string>
     <string name="navigate_to_settings">Navigate to Settings</string>
+
+    <!-- Dashboard Screen -->
+    <string name="dashboard_student_name">Elif Yılmaz</string>
+    <string name="dashboard_student_label">Student: %1$s</string>
+    <string name="dashboard_payment_cycle_title">Current Payment Cycle</string>
+    <string name="dashboard_payment_amount_value">%1$s</string>
+    <string name="dashboard_payment_rate_info">%1$s hours x %2$s/hour</string>
+    <string name="dashboard_payment_since_last">Since last payment on Jan 15, 2024</string>
+    <string name="dashboard_payment_mark_paid">Mark as Paid</string>
+    <string name="dashboard_add_lesson_dialog_title">Add New Lesson</string>
+    <string name="dashboard_add_lesson_duration_label">Duration (in hours)</string>
+    <string name="dashboard_add_lesson_notes_label">Notes</string>
+    <string name="dashboard_add_lesson_button_content_description">Add new lesson</string>
+    <string name="dashboard_upcoming_lessons_title">Upcoming Lessons</string>
+    <string name="dashboard_ai_insights_title">AI Assistant Insights</string>
+    <string name="dashboard_ai_insights_body">Elif\'s performance in "Algebra" has improved significantly. However, her recent homework scores on "Geometry" suggest a need for review. Consider assigning a focused worksheet on triangles for the next lesson.</string>
+    <string name="dashboard_settings_icon_description">Open settings</string>
+    <string-array name="dashboard_upcoming_lessons">
+        <item>Wednesday, March 27</item>
+        <item>Friday, March 29</item>
+    </string-array>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_month_year_title">%1$s %2$d</string>
+    <string name="calendar_previous_month_content_description">Previous month</string>
+    <string name="calendar_next_month_content_description">Next month</string>
+    <string name="calendar_add_lesson_fab_content_description">Add lesson</string>
+    <string name="calendar_top_bar_title">%1$s - %2$s</string>
+    <string name="calendar_select_day_message">Please select a day first</string>
+    <string name="calendar_lesson_scheduled_message">Lesson scheduled</string>
+
+    <!-- Add Student Dialog -->
+    <string name="add_student_dialog_title">Add New Student</string>
+    <string name="add_student_dialog_full_name">Full Name</string>
+    <string name="add_student_dialog_hourly_rate">Hourly Rate</string>
+    <string name="dialog_action_cancel">Cancel</string>
+    <string name="dialog_action_save">Save</string>
+    <string name="add_student_dialog_save">Save</string>
+    <string name="add_student_dialog_cancel">Cancel</string>
 
 </resources>
