@@ -6,7 +6,8 @@ import com.barutdev.kora.domain.model.Student
 fun StudentEntity.toDomain(): Student = Student(
     id = id,
     fullName = fullName,
-    hourlyRate = hourlyRate
+    hourlyRate = hourlyRate,
+    lastPaymentDate = lastPaymentDate
 )
 
 fun List<StudentEntity>.toDomain(): List<Student> = map(StudentEntity::toDomain)
@@ -14,5 +15,6 @@ fun List<StudentEntity>.toDomain(): List<Student> = map(StudentEntity::toDomain)
 fun Student.toEntity(): StudentEntity = StudentEntity(
     id = id,
     fullName = fullName,
-    hourlyRate = hourlyRate
+    hourlyRate = hourlyRate,
+    lastPaymentDate = lastPaymentDate
 )

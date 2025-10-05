@@ -9,4 +9,8 @@ interface StudentRepository {
     fun getStudentById(id: Int): Flow<Student?>
 
     suspend fun addStudent(student: Student)
+
+    suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double)
+
+    suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
 }

@@ -9,7 +9,8 @@ fun LessonEntity.toDomain(): Lesson = Lesson(
     date = date,
     status = status,
     durationInHours = durationInHours,
-    notes = notes
+    notes = notes,
+    paymentTimestamp = paymentTimestamp
 )
 
 fun List<LessonEntity>.toDomain(): List<Lesson> = map(LessonEntity::toDomain)
@@ -20,5 +21,6 @@ fun Lesson.toEntity(): LessonEntity = LessonEntity(
     date = date,
     status = status,
     durationInHours = durationInHours,
-    notes = notes
+    notes = notes,
+    paymentTimestamp = paymentTimestamp
 )

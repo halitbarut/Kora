@@ -16,36 +16,43 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.barutdev.kora.R
+import java.util.Locale
 
 @Composable
 fun AddStudentDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
     onSave: (fullName: String, hourlyRate: String) -> Unit,
+    initialHourlyRate: Double,
     modifier: Modifier = Modifier
 ) {
     if (!showDialog) return
 
-    var fullName by rememberSaveable { mutableStateOf("") }
-    var hourlyRate by rememberSaveable { mutableStateOf("") }
+    var fullName by rememberSaveable(showDialog) { mutableStateOf("") }
+    var hourlyRate by rememberSaveable(showDialog, initialHourlyRate) {
+        mutableStateOf(
+            initialHourlyRate.takeIf { it > 0.0 }?.let { String.format(Locale.US, "%.2f", it) }
+                ?: ""
+        )
+    }
 
     val isSaveEnabled = fullName.isNotBlank() && hourlyRate.toDoubleOrNull() != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = stringResource(id = R.string.add_student_dialog_title))
+            Text(text = koraStringResource(id = R.string.add_student_dialog_title))
         },
         text = {
             Column(modifier = modifier) {
                 TextField(
                     value = fullName,
                     onValueChange = { fullName = it },
-                    label = { Text(text = stringResource(id = R.string.add_student_dialog_full_name)) },
+                    label = { Text(text = koraStringResource(id = R.string.add_student_dialog_full_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -53,12 +60,12 @@ fun AddStudentDialog(
                 TextField(
                     value = hourlyRate,
                     onValueChange = { newValue ->
-                        val sanitized = newValue.filter { it.isDigit() || it == '.' }
-                        if (sanitized.count { it == '.' } <= 1) {
-                            hourlyRate = sanitized
+                        val normalized = newValue.replace(',', '.')
+                        if (normalized.count { it == '.' } <= 1 && normalized.all { it.isDigit() || it == '.' }) {
+                            hourlyRate = normalized
                         }
                     },
-                    label = { Text(text = stringResource(id = R.string.add_student_dialog_hourly_rate)) },
+                    label = { Text(text = koraStringResource(id = R.string.add_student_dialog_hourly_rate)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -74,12 +81,12 @@ fun AddStudentDialog(
                 },
                 enabled = isSaveEnabled
             ) {
-                Text(text = stringResource(id = R.string.add_student_dialog_save))
+                Text(text = koraStringResource(id = R.string.add_student_dialog_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.add_student_dialog_cancel))
+                Text(text = koraStringResource(id = R.string.add_student_dialog_cancel))
             }
         }
     )

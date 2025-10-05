@@ -1,0 +1,145 @@
+<resources>
+    <string name="app_name">Kora</string>
+
+    <!-- Student List Screen -->
+    <string name="student_list_title">Öğrencilerim</string>
+    <string name="student_list_empty_title">İlk öğrencinizi ekleyin</string>
+    <string name="student_list_empty_message">Başlamak için köşedeki + düğmesine dokunun.</string>
+    <string name="student_list_amount_due">Mevcut borç tutarı: %1$s</string>
+    <string name="student_list_add_student_fab_content_description">Yeni öğrenci ekle</string>
+    <string name="student_list_list_item_trailing_icon_content_description">Öğrenci ayrıntılarını görüntüle</string>
+    <string name="student_list_edit_student_content_description">Öğrenciyi düzenle</string>
+
+    <!-- Navigation & Screen Titles -->
+    <string name="dashboard_title">Gösterge Paneli</string>
+    <string name="calendar_title">Takvim</string>
+    <string name="homework_title">Ödevler</string>
+    <string name="homework_top_bar_title">%1$s - %2$s</string>
+    <string name="homework_ai_card_title">Yapay Zeka Ödev İçgörüleri</string>
+    <string name="homework_ai_card_body">%1$s\'in ödev performansı yükselişte. İvmeyi korumak için daha zorlu sorulara odaklanın.</string>
+    <string name="homework_assignments_section_title">Tüm Ödevler</string>
+    <string name="homework_empty_state_message">Henüz ödev atanmadı.</string>
+    <string name="homework_due_date_label">Son teslim: %1$s</string>
+    <string name="homework_status_pending">Beklemede</string>
+    <string name="homework_status_completed">Tamamlandı</string>
+    <string name="homework_add_fab_content_description">Ödev ekle</string>
+    <string name="homework_dialog_add_title">Ödev Ekle</string>
+    <string name="homework_dialog_edit_title">Ödevi Düzenle</string>
+    <string name="homework_dialog_title_label">Başlık</string>
+    <string name="homework_dialog_description_label">Açıklama</string>
+    <string name="homework_dialog_due_date_label">Teslim Tarihi (YYYY-MM-DD)</string>
+    <string name="homework_dialog_due_date_hint">Örnek: 2024-04-15</string>
+    <string name="homework_dialog_due_date_error">Geçerli bir teslim tarihi girin.</string>
+    <string name="homework_dialog_status_label">Durum</string>
+    <string name="homework_dialog_performance_notes_label">Performans Notları</string>
+    <string name="homework_dialog_cancel">İptal</string>
+    <string name="homework_dialog_save">Kaydet</string>
+    <string name="homework_dialog_update">Güncelle</string>
+    <string name="settings_title">Ayarlar</string>
+    <string name="navigate_to_settings">Ayarlar\'a git</string>
+    <string name="settings_back_content_description">Geri dön</string>
+    <string name="settings_section_general">Genel</string>
+    <string name="settings_section_tutoring">Özel Ders</string>
+    <string name="settings_dark_mode_label">Karanlık Mod</string>
+    <string name="settings_dark_mode_content_description">Karanlık modu değiştir</string>
+    <string name="settings_language_label">Dil</string>
+    <string name="settings_language_content_description">Uygulama dilini değiştir</string>
+    <string name="settings_language_dialog_title">Dil Seçin</string>
+    <string name="settings_language_option_en">İngilizce</string>
+    <string name="settings_language_option_tr">Türkçe</string>
+    <string name="settings_language_option_de">Almanca</string>
+    <string name="settings_currency_label">Para Birimi</string>
+    <string name="settings_currency_content_description">Para birimini değiştir</string>
+    <string name="settings_currency_dialog_title">Para Birimi Seçin</string>
+    <string name="settings_currency_option_usd">Amerikan Doları (USD)</string>
+    <string name="settings_currency_option_eur">Euro (EUR)</string>
+    <string name="settings_currency_option_try">Türk Lirası (TRY)</string>
+    <string name="settings_default_hourly_rate_label">Varsayılan Saatlik Ücret</string>
+    <string name="settings_default_hourly_rate_content_description">Varsayılan saatlik ücreti değiştir</string>
+    <string name="settings_hourly_rate_dialog_title">Varsayılan Saatlik Ücreti Güncelle</string>
+    <string name="settings_hourly_rate_dialog_label">Varsayılan saatlik ücret</string>
+    <string name="settings_hourly_rate_dialog_hint">Örnek: 80.00 %1$s</string>
+    <string name="settings_hourly_rate_dialog_error">Geçerli bir saatlik ücret girin.</string>
+    <string name="settings_hourly_rate_empty_value">-- %1$s</string>
+    <string name="settings_save_button">Kaydet</string>
+    <string name="settings_section_notifications">Bildirimler</string>
+    <string name="settings_lesson_reminders_label">Ders Hatırlatmaları</string>
+    <string name="settings_lesson_reminders_content_description">Ders hatırlatma bildirimlerini aç/kapat</string>
+    <string name="settings_log_reminder_label">Ders Sonrası Not Hatırlatıcısı</string>
+    <string name="settings_log_reminder_content_description">Ders sonrası not hatırlatmalarını aç/kapat</string>
+
+    <!-- Dashboard Screen -->
+    <string name="dashboard_student_name">Elif Yılmaz</string>
+    <string name="dashboard_student_label">Öğrenci: %1$s</string>
+    <string name="dashboard_payment_cycle_title">Mevcut Ödeme Dönemi</string>
+    <string name="dashboard_payment_amount_value">%1$s</string>
+    <string name="dashboard_payment_rate_info">%1$s saat x %2$s/saat</string>
+    <string name="dashboard_payment_since_last_with_date">%1$s tarihindeki son ödemeden beri</string>
+    <string name="dashboard_payment_since_last_unknown">Henüz ödeme kaydı yok.</string>
+    <string name="dashboard_payment_mark_paid">Ödendi olarak işaretle</string>
+    <string name="dashboard_add_lesson_dialog_title">Yeni Ders Ekle</string>
+    <string name="dashboard_add_lesson_duration_label">Süre (saat olarak)</string>
+    <string name="dashboard_add_lesson_notes_label">Notlar</string>
+    <string name="dashboard_upcoming_lessons_title">Yaklaşan Dersler</string>
+    <string name="dashboard_upcoming_lessons_empty">Henüz planlanmış ders yok.</string>
+    <string name="dashboard_log_past_lessons_title">Geçmiş Dersleri Kaydet</string>
+    <string name="dashboard_log_past_lessons_empty">Kaydedilecek geçmiş ders yok.</string>
+    <string name="dashboard_log_past_lessons_hint">Detaylarını girmek için bir derse dokunun.</string>
+    <string name="dashboard_completed_lessons_title">Ödeme Bekleyen Tamamlanan Dersler</string>
+    <string name="dashboard_completed_lessons_empty">Ödeme bekleyen tamamlanan ders yok.</string>
+    <string name="dashboard_completed_lessons_duration">Süre: %1$s saat</string>
+    <string name="dashboard_completed_lessons_notes">Notlar: %1$s</string>
+    <string name="dashboard_log_lesson_dialog_title">Dersi Kaydet</string>
+    <string name="dashboard_log_lesson_dialog_date">%1$s tarihli ders</string>
+    <string name="dashboard_log_lesson_duration_label">Süre (saat olarak)</string>
+    <string name="dashboard_log_lesson_notes_label">Notlar</string>
+    <string name="dashboard_log_lesson_complete_button">Dersi Tamamla</string>
+    <string name="dashboard_log_lesson_mark_not_done_button">Yapılmadı olarak işaretle</string>
+    <string name="dashboard_ai_insights_title">Yapay Zeka Asistanı İçgörüleri</string>
+    <string name="dashboard_ai_insights_body">Elif\'in "Cebir" performansı önemli ölçüde gelişti...</string>
+    <string name="dashboard_settings_icon_description">Ayarları aç</string>
+    <string name="top_bar_navigate_to_student_list_content_description">Öğrenci listesine git</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Ders hatırlatmaları</string>
+    <string name="notification_channel_description">Yaklaşan dersler ve takip görevleri hakkında bilgi alın.</string>
+    <string name="notification_lesson_reminder_title">Ders hatırlatıcısı</string>
+    <string name="notification_lesson_reminder_day_before">Hatırlatma: Yarın %1$s ile bir dersiniz var.</string>
+    <string name="notification_lesson_reminder_day_of">Hatırlatma: Bugün %1$s ile bir dersiniz var.</string>
+    <string name="notification_default_message">Kora\'dan yeni bir hatırlatmanız var.</string>
+    <string name="notification_log_reminder_message">Bugünkü derslerinizi kaydetmeyi unutmayın.</string>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_month_year_title">%1$s %2$d</string>
+    <string name="calendar_previous_month_content_description">Önceki ay</string>
+    <string name="calendar_next_month_content_description">Sonraki ay</string>
+    <string name="calendar_add_lesson_fab_content_description">Ders ekle</string>
+    <string name="calendar_top_bar_title">%1$s - %2$s</string>
+    <string name="calendar_select_day_message">Lütfen önce bir gün seçin</string>
+    <string name="calendar_lesson_scheduled_message">Ders planlandı</string>
+    <string name="calendar_day_details_title">%1$s tarihindeki dersler</string>
+    <string name="calendar_no_lessons_message">Bu gün için planlanmış ders yok.</string>
+    <string name="calendar_lesson_details_title">%1$s tarihli ders</string>
+    <string name="calendar_lesson_details_status">Durum: %1$s</string>
+    <string name="calendar_lesson_details_duration">Süre: %1$s saat</string>
+    <string name="calendar_lesson_details_notes">Notlar: %1$s</string>
+    <string name="calendar_lesson_action_edit">Düzenle</string>
+    <string name="calendar_lesson_action_log_details">Detayları kaydet</string>
+    <string name="calendar_status_paid">Ödendi</string>
+    <string name="calendar_status_completed">Tamamlandı (Ödeme Bekleniyor)</string>
+    <string name="calendar_status_scheduled">Planlandı</string>
+    <string name="calendar_status_scheduled_needs_logging">Planlandı (Kaydı Gerekli)</string>
+    <string name="calendar_status_cancelled">İptal edildi</string>
+
+    <!-- Add Student Dialog -->
+    <string name="add_student_dialog_title">Yeni Öğrenci Ekle</string>
+    <string name="add_student_dialog_full_name">Tam Ad</string>
+    <string name="add_student_dialog_hourly_rate">Saatlik Ücret</string>
+    <string name="dialog_action_cancel">İptal</string>
+    <string name="dialog_action_save">Kaydet</string>
+    <string name="add_student_dialog_save">Kaydet</string>
+    <string name="add_student_dialog_cancel">İptal</string>
+
+    <!-- Edit Student Dialog -->
+    <string name="edit_student_dialog_title">Öğrenciyi Düzenle</string>
+</resources>

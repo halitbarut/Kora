@@ -16,7 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.barutdev.kora.R
@@ -42,7 +42,7 @@ fun AddLessonDialog(
             onDismiss()
         },
         title = {
-            Text(text = stringResource(id = R.string.dashboard_add_lesson_dialog_title))
+            Text(text = koraStringResource(id = R.string.dashboard_add_lesson_dialog_title))
         },
         text = {
             Column {
@@ -64,7 +64,7 @@ fun AddLessonDialog(
                         duration = sanitized.toString()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(id = R.string.dashboard_add_lesson_duration_label)) },
+                    label = { Text(text = koraStringResource(id = R.string.dashboard_add_lesson_duration_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
@@ -73,7 +73,7 @@ fun AddLessonDialog(
                     value = notes,
                     onValueChange = { notes = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(id = R.string.dashboard_add_lesson_notes_label)) },
+                    label = { Text(text = koraStringResource(id = R.string.dashboard_add_lesson_notes_label)) },
                     singleLine = false,
                     minLines = 2,
                     maxLines = 4
@@ -89,7 +89,7 @@ fun AddLessonDialog(
                 },
                 enabled = isSaveEnabled
             ) {
-                Text(text = stringResource(id = R.string.add_student_dialog_save))
+                Text(text = koraStringResource(id = R.string.add_student_dialog_save))
             }
         },
         dismissButton = {
@@ -100,7 +100,7 @@ fun AddLessonDialog(
                     onDismiss()
                 }
             ) {
-                Text(text = stringResource(id = R.string.add_student_dialog_cancel))
+                Text(text = koraStringResource(id = R.string.add_student_dialog_cancel))
             }
         }
     )

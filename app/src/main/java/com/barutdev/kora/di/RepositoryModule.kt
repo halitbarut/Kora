@@ -1,9 +1,13 @@
 package com.barutdev.kora.di
 
+import com.barutdev.kora.data.repository.HomeworkRepositoryImpl
 import com.barutdev.kora.data.repository.LessonRepositoryImpl
 import com.barutdev.kora.data.repository.StudentRepositoryImpl
+import com.barutdev.kora.data.repository.UserPreferencesRepository as DataUserPreferencesRepository
+import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
+import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -25,4 +29,16 @@ abstract class RepositoryModule {
     abstract fun bindLessonRepository(
         impl: LessonRepositoryImpl
     ): LessonRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHomeworkRepository(
+        impl: HomeworkRepositoryImpl
+    ): HomeworkRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserPreferencesRepository(
+        impl: DataUserPreferencesRepository
+    ): UserPreferencesRepository
 }
