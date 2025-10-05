@@ -8,5 +8,6 @@ data class StudentEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val fullName: String,
-    val hourlyRate: Double
+    val hourlyRate: Double,
+    val lastPaymentDate: Long? = null
 )

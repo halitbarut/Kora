@@ -24,6 +24,16 @@ class StudentRepositoryImpl @Inject constructor(
         }
 
     override suspend fun addStudent(student: Student) {
-        studentDao.insert(student.toEntity())
+        val timestamp = student.lastPaymentDate ?: System.currentTimeMillis()
+        val entity = student.copy(lastPaymentDate = timestamp).toEntity()
+        studentDao.insert(entity)
+    }
+
+    override suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double) {
+        studentDao.updateStudentHourlyRate(studentId, newRate)
+    }
+
+    override suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double) {
+        studentDao.updateStudent(studentId, fullName, hourlyRate)
     }
 }

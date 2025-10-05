@@ -75,7 +75,15 @@ fun KoraNavGraph(
                     }
                 },
                 onNavigateToSettings = {
-                    navController.navigate(KoraDestination.Settings.route) {
+                    navController.navigate("settings") {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToStudentList = {
+                    navController.navigate(KoraDestination.StudentList.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
                         launchSingleTop = true
                     }
                 }
@@ -95,6 +103,14 @@ fun KoraNavGraph(
                     navController.navigate(route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToStudentList = {
+                    navController.navigate(KoraDestination.StudentList.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -105,13 +121,28 @@ fun KoraNavGraph(
                     type = NavType.IntType
                 }
             )
-        ) { backStackEntry ->
-            val studentId = backStackEntry.arguments?.getInt(STUDENT_ID_ARG)
-                ?: return@composable
-            HomeworkScreen(studentId = studentId)
+        ) {
+            HomeworkScreen(
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToStudentList = {
+                    navController.navigate(KoraDestination.StudentList.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
         composable(route = KoraDestination.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

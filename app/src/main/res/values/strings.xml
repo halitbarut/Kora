@@ -8,13 +8,64 @@
     <string name="student_list_amount_due">Current amount due: %1$s</string>
     <string name="student_list_add_student_fab_content_description">Add new student</string>
     <string name="student_list_list_item_trailing_icon_content_description">View student details</string>
+    <string name="student_list_edit_student_content_description">Edit student</string>
 
     <!-- Navigation & Screen Titles -->
     <string name="dashboard_title">Dashboard</string>
     <string name="calendar_title">Calendar</string>
     <string name="homework_title">Homework</string>
+    <string name="homework_top_bar_title">%1$s - %2$s</string>
+    <string name="homework_ai_card_title">AI Homework Insights</string>
+    <string name="homework_ai_card_body">%1$s\'s homework performance is trending upward. Focus on more challenging problems to keep the momentum going.</string>    <string name="homework_assignments_section_title">All Assignments</string>
+    <string name="homework_empty_state_message">No homework assigned yet.</string>
+    <string name="homework_due_date_label">Due: %1$s</string>
+    <string name="homework_status_pending">Pending</string>
+    <string name="homework_status_completed">Completed</string>
+    <string name="homework_add_fab_content_description">Add homework</string>
+    <string name="homework_dialog_add_title">Add Homework</string>
+    <string name="homework_dialog_edit_title">Edit Homework</string>
+    <string name="homework_dialog_title_label">Title</string>
+    <string name="homework_dialog_description_label">Description</string>
+    <string name="homework_dialog_due_date_label">Due Date (YYYY-MM-DD)</string>
+    <string name="homework_dialog_due_date_hint">Example: 2024-04-15</string>
+    <string name="homework_dialog_due_date_error">Enter a valid due date.</string>
+    <string name="homework_dialog_status_label">Status</string>
+    <string name="homework_dialog_performance_notes_label">Performance Notes</string>
+    <string name="homework_dialog_cancel">Cancel</string>
+    <string name="homework_dialog_save">Save</string>
+    <string name="homework_dialog_update">Update</string>
     <string name="settings_title">Settings</string>
     <string name="navigate_to_settings">Navigate to Settings</string>
+    <string name="settings_back_content_description">Navigate back</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_tutoring">Tutoring</string>
+    <string name="settings_dark_mode_label">Dark Mode</string>
+    <string name="settings_dark_mode_content_description">Toggle dark mode</string>
+    <string name="settings_language_label">Language</string>
+    <string name="settings_language_content_description">Change app language</string>
+    <string name="settings_language_dialog_title">Choose Language</string>
+    <string name="settings_language_option_en">English</string>
+    <string name="settings_language_option_tr">Türkçe</string>
+    <string name="settings_language_option_de">Deutsch</string>
+    <string name="settings_currency_label">Currency</string>
+    <string name="settings_currency_content_description">Change currency</string>
+    <string name="settings_currency_dialog_title">Choose Currency</string>
+    <string name="settings_currency_option_usd">US Dollar (USD)</string>
+    <string name="settings_currency_option_eur">Euro (EUR)</string>
+    <string name="settings_currency_option_try">Turkish Lira (TRY)</string>
+    <string name="settings_default_hourly_rate_label">Default Hourly Rate</string>
+    <string name="settings_default_hourly_rate_content_description">Change default hourly rate</string>
+    <string name="settings_hourly_rate_dialog_title">Update Default Hourly Rate</string>
+    <string name="settings_hourly_rate_dialog_label">Default hourly rate</string>
+    <string name="settings_hourly_rate_dialog_hint">Example: 80.00 %1$s</string>
+    <string name="settings_hourly_rate_dialog_error">Enter a valid hourly rate.</string>
+    <string name="settings_hourly_rate_empty_value">-- %1$s</string>
+    <string name="settings_save_button">Save</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_lesson_reminders_label">Lesson Reminders</string>
+    <string name="settings_lesson_reminders_content_description">Toggle lesson reminder notifications</string>
+    <string name="settings_log_reminder_label">Post-Lesson Log Reminder</string>
+    <string name="settings_log_reminder_content_description">Toggle post-lesson log reminder notifications</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_student_name">Elif Yılmaz</string>
@@ -22,20 +73,40 @@
     <string name="dashboard_payment_cycle_title">Current Payment Cycle</string>
     <string name="dashboard_payment_amount_value">%1$s</string>
     <string name="dashboard_payment_rate_info">%1$s hours x %2$s/hour</string>
-    <string name="dashboard_payment_since_last">Since last payment on Jan 15, 2024</string>
+    <string name="dashboard_payment_since_last_with_date">Since last payment on %1$s</string>
+    <string name="dashboard_payment_since_last_unknown">No payments recorded yet.</string>
     <string name="dashboard_payment_mark_paid">Mark as Paid</string>
     <string name="dashboard_add_lesson_dialog_title">Add New Lesson</string>
     <string name="dashboard_add_lesson_duration_label">Duration (in hours)</string>
     <string name="dashboard_add_lesson_notes_label">Notes</string>
-    <string name="dashboard_add_lesson_button_content_description">Add new lesson</string>
     <string name="dashboard_upcoming_lessons_title">Upcoming Lessons</string>
+    <string name="dashboard_upcoming_lessons_empty">No lessons scheduled yet.</string>
+    <string name="dashboard_log_past_lessons_title">Log Past Lessons</string>
+    <string name="dashboard_log_past_lessons_empty">No past lessons to log.</string>
+    <string name="dashboard_log_past_lessons_hint">Tap a lesson to log its details.</string>
+    <string name="dashboard_completed_lessons_title">Completed Lessons Awaiting Payment</string>
+    <string name="dashboard_completed_lessons_empty">No completed lessons waiting for payment.</string>
+    <string name="dashboard_completed_lessons_duration">Duration: %1$s hours</string>
+    <string name="dashboard_completed_lessons_notes">Notes: %1$s</string>
+    <string name="dashboard_log_lesson_dialog_title">Log Lesson</string>
+    <string name="dashboard_log_lesson_dialog_date">Lesson on %1$s</string>
+    <string name="dashboard_log_lesson_duration_label">Duration (in hours)</string>
+    <string name="dashboard_log_lesson_notes_label">Notes</string>
+    <string name="dashboard_log_lesson_complete_button">Complete Lesson</string>
+    <string name="dashboard_log_lesson_mark_not_done_button">Mark as Not Done</string>
     <string name="dashboard_ai_insights_title">AI Assistant Insights</string>
     <string name="dashboard_ai_insights_body">Elif\'s performance in "Algebra" has improved significantly. However, her recent homework scores on "Geometry" suggest a need for review. Consider assigning a focused worksheet on triangles for the next lesson.</string>
     <string name="dashboard_settings_icon_description">Open settings</string>
-    <string-array name="dashboard_upcoming_lessons">
-        <item>Wednesday, March 27</item>
-        <item>Friday, March 29</item>
-    </string-array>
+    <string name="top_bar_navigate_to_student_list_content_description">Go to student list</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Lesson reminders</string>
+    <string name="notification_channel_description">Stay on top of upcoming lessons and follow-up tasks.</string>
+    <string name="notification_lesson_reminder_title">Lesson reminder</string>
+    <string name="notification_lesson_reminder_day_before">Reminder: You have a lesson with %1$s tomorrow.</string>
+    <string name="notification_lesson_reminder_day_of">Reminder: You have a lesson with %1$s today.</string>
+    <string name="notification_default_message">You have a new reminder from Kora.</string>
+    <string name="notification_log_reminder_message">Don\'t forget to log any lessons you had today.</string>
 
     <!-- Calendar Screen -->
     <string name="calendar_month_year_title">%1$s %2$d</string>
@@ -45,6 +116,19 @@
     <string name="calendar_top_bar_title">%1$s - %2$s</string>
     <string name="calendar_select_day_message">Please select a day first</string>
     <string name="calendar_lesson_scheduled_message">Lesson scheduled</string>
+    <string name="calendar_day_details_title">Lessons on %1$s</string>
+    <string name="calendar_no_lessons_message">No lessons scheduled for this day.</string>
+    <string name="calendar_lesson_details_title">Lesson on %1$s</string>
+    <string name="calendar_lesson_details_status">Status: %1$s</string>
+    <string name="calendar_lesson_details_duration">Duration: %1$s hours</string>
+    <string name="calendar_lesson_details_notes">Notes: %1$s</string>
+    <string name="calendar_lesson_action_edit">Edit</string>
+    <string name="calendar_lesson_action_log_details">Log Details</string>
+    <string name="calendar_status_paid">Paid</string>
+    <string name="calendar_status_completed">Completed (Awaiting Payment)</string>
+    <string name="calendar_status_scheduled">Scheduled</string>
+    <string name="calendar_status_scheduled_needs_logging">Scheduled (Needs Logging)</string>
+    <string name="calendar_status_cancelled">Cancelled</string>
 
     <!-- Add Student Dialog -->
     <string name="add_student_dialog_title">Add New Student</string>
@@ -54,5 +138,8 @@
     <string name="dialog_action_save">Save</string>
     <string name="add_student_dialog_save">Save</string>
     <string name="add_student_dialog_cancel">Cancel</string>
+
+    <!-- Edit Student Dialog -->
+    <string name="edit_student_dialog_title">Edit Student</string>
 
 </resources>

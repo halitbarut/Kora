@@ -20,9 +20,18 @@ interface StudentDao {
     @Delete
     suspend fun delete(student: StudentEntity)
 
+    @Query("UPDATE students SET lastPaymentDate = :lastPaymentDate WHERE id = :studentId")
+    suspend fun updateLastPaymentDate(studentId: Int, lastPaymentDate: Long)
+
     @Query("SELECT * FROM students WHERE id = :id")
     fun getStudentById(id: Int): Flow<StudentEntity?>
 
     @Query("SELECT * FROM students")
     fun getAllStudents(): Flow<List<StudentEntity>>
+
+    @Query("UPDATE students SET hourlyRate = :newRate WHERE id = :studentId")
+    suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double)
+
+    @Query("UPDATE students SET fullName = :fullName, hourlyRate = :hourlyRate WHERE id = :studentId")
+    suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
 }

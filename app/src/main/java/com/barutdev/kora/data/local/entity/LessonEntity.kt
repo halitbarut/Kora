@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.barutdev.kora.domain.model.LessonStatus
 
 @Entity(
     tableName = "lessons",
@@ -22,7 +23,8 @@ data class LessonEntity(
     val id: Int = 0,
     val studentId: Int,
     val date: Long,
-    val status: String,
+    val status: LessonStatus,
     val durationInHours: Double?,
-    val notes: String?
+    val notes: String?,
+    val paymentTimestamp: Long? = null
 )
