@@ -96,6 +96,15 @@
     <string name="dashboard_log_lesson_mark_not_done_button">Mark as Not Done</string>
     <string name="dashboard_ai_insights_title">AI Assistant Insights</string>
     <string name="dashboard_ai_insights_body">Elif\'s performance in "Algebra" has improved significantly. However, her recent homework scores on "Geometry" suggest a need for review. Consider assigning a focused worksheet on triangles for the next lesson.</string>
+    <string name="ai_loading_message">Generating tailored insights...</string>
+    <string name="ai_retry_action">Retry</string>
+    <string name="ai_generate_again_action">Generate again</string>
+    <string name="ai_missing_api_key_message">Add your Gemini API key in local.properties to enable AI insights.</string>
+    <string name="ai_empty_response_message">The AI did not return any insights. Please try again.</string>
+    <string name="ai_generic_error_message">We couldn\'t retrieve AI insights right now. Try again shortly.</string>
+    <string name="ai_generic_no_data_message">Add more student activity to unlock AI insights.</string>
+    <string name="dashboard_ai_no_data_message">Log lessons or homework to generate dashboard insights.</string>
+    <string name="homework_ai_no_data_message">Add homework details for %1$s to generate AI insights.</string>
     <string name="dashboard_settings_icon_description">Open settings</string>
     <string name="top_bar_navigate_to_student_list_content_description">Go to student list</string>
 

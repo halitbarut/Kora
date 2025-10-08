@@ -3,19 +3,34 @@ package com.barutdev.kora.ui.screens.dashboard
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.barutdev.kora.R
+import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.ai.AiInsightsComputation
+import com.barutdev.kora.domain.model.ai.AiInsightsFocus
+import com.barutdev.kora.domain.model.ai.AiInsightsSignatureBuilder
+import com.barutdev.kora.domain.model.ai.AiInsightsResult
+import com.barutdev.kora.domain.model.ai.CachedAiInsight
+import com.barutdev.kora.domain.repository.AiInsightsCacheRepository
 import com.barutdev.kora.domain.repository.LessonRepository
+import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.StudentRepository
+import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
 import com.barutdev.kora.notifications.AlarmScheduler
+import com.barutdev.kora.ui.model.AiInsightsUiState
+import com.barutdev.kora.ui.model.AiStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Locale
+import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -42,12 +57,28 @@ class DashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val studentRepository: StudentRepository,
     private val lessonRepository: LessonRepository,
-    private val alarmScheduler: AlarmScheduler
+    private val homeworkRepository: HomeworkRepository,
+    private val aiInsightsCacheRepository: AiInsightsCacheRepository,
+    private val alarmScheduler: AlarmScheduler,
+    private val generateAiInsightsUseCase: GenerateAiInsightsUseCase
 ) : ViewModel() {
 
     private val studentId: Int = checkNotNull(
         savedStateHandle[STUDENT_ID_ARG]
     )
+
+    private val _aiInsightsState = MutableStateFlow(AiInsightsUiState())
+    val aiInsightsState: StateFlow<AiInsightsUiState> = _aiInsightsState.asStateFlow()
+
+    private var lastRequestedLocale: Locale? = null
+    private var lastAiInputSignature: String? = null
+    private var pendingGenerationSignature: String? = null
+    private var cachedAiInsight: CachedAiInsight? = null
+    private var latestStudentSnapshot: Student? = null
+    private var latestLessonsSnapshot: List<Lesson> = emptyList()
+    private var latestHomeworkSnapshot: List<Homework> = emptyList()
+    private var latestComputedSignature: String? = null
+    private var aiInsightsJob: Job? = null
 
     private val addLessonDialogVisibility = MutableStateFlow(false)
     private val logLessonDialogVisibility = MutableStateFlow(false)
@@ -66,6 +97,53 @@ class DashboardViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    private val homework: StateFlow<List<Homework>> =
+        homeworkRepository.getHomeworkForStudent(studentId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    init {
+        viewModelScope.launch {
+            combine(student, lessons, homework) { studentSnapshot, lessonsSnapshot, homeworkSnapshot ->
+                Triple(studentSnapshot, lessonsSnapshot, homeworkSnapshot)
+            }.collect { (studentSnapshot, lessonsSnapshot, homeworkSnapshot) ->
+                latestStudentSnapshot = studentSnapshot
+                latestLessonsSnapshot = lessonsSnapshot
+                latestHomeworkSnapshot = homeworkSnapshot
+                val locale = lastRequestedLocale ?: return@collect
+                val signature = AiInsightsSignatureBuilder.build(
+                    focus = AiInsightsFocus.DASHBOARD,
+                    student = studentSnapshot,
+                    lessons = lessonsSnapshot,
+                    homework = homeworkSnapshot,
+                    locale = locale
+                )
+                latestComputedSignature = signature
+                val cached = cachedAiInsight
+                if (cached != null && cached.signature == signature) {
+                    if (_aiInsightsState.value.status != AiStatus.Success ||
+                        _aiInsightsState.value.insight != cached.insight
+                    ) {
+                        _aiInsightsState.value = AiInsightsUiState(
+                            status = AiStatus.Success,
+                            insight = cached.insight
+                        )
+                    }
+                    lastAiInputSignature = signature
+                } else {
+                    triggerAiInsightsGeneration(
+                        locale = locale,
+                        signature = signature,
+                        force = false
+                    )
+                }
+            }
+        }
+    }
 
     val uiState: StateFlow<DashboardUiState> = combine(
         student,
@@ -123,6 +201,175 @@ class DashboardViewModel @Inject constructor(
 
     fun dismissAddLessonDialog() {
         addLessonDialogVisibility.value = false
+    }
+
+    fun ensureAiInsights(locale: Locale) {
+        lastRequestedLocale = locale
+        val signature = computeSignature(locale)
+        latestComputedSignature = signature
+        viewModelScope.launch {
+            val localeTag = locale.toLanguageTag()
+            val cached = aiInsightsCacheRepository.getInsight(
+                studentId = studentId,
+                focus = AiInsightsFocus.DASHBOARD,
+                localeTag = localeTag
+            )
+            cachedAiInsight = cached
+            if (cached != null) {
+                lastAiInputSignature = cached.signature
+                _aiInsightsState.value = AiInsightsUiState(
+                    status = AiStatus.Success,
+                    insight = cached.insight
+                )
+                if (cached.signature == signature) {
+                    return@launch
+                }
+            }
+            triggerAiInsightsGeneration(
+                locale = locale,
+                signature = signature,
+                force = false
+            )
+        }
+    }
+
+    fun retryAiInsights(locale: Locale) {
+        lastRequestedLocale = locale
+        val signature = computeSignature(locale)
+        latestComputedSignature = signature
+        triggerAiInsightsGeneration(
+            locale = locale,
+            signature = signature,
+            force = true
+        )
+    }
+
+    private fun computeSignature(locale: Locale): String {
+        val studentSnapshot = latestStudentSnapshot ?: student.value
+        val lessonsSnapshot = if (latestComputedSignature != null) {
+            latestLessonsSnapshot
+        } else {
+            lessons.value
+        }
+        val homeworkSnapshot = if (latestComputedSignature != null) {
+            latestHomeworkSnapshot
+        } else {
+            homework.value
+        }
+        return AiInsightsSignatureBuilder.build(
+            focus = AiInsightsFocus.DASHBOARD,
+            student = studentSnapshot,
+            lessons = lessonsSnapshot,
+            homework = homeworkSnapshot,
+            locale = locale
+        )
+    }
+
+    private fun triggerAiInsightsGeneration(
+        locale: Locale,
+        signature: String,
+        force: Boolean
+    ) {
+        val localeTag = locale.toLanguageTag()
+        if (!force) {
+            if (pendingGenerationSignature == signature) {
+                return
+            }
+            if (lastAiInputSignature == signature && _aiInsightsState.value.status != AiStatus.Idle) {
+                return
+            }
+        }
+        aiInsightsJob?.cancel()
+        pendingGenerationSignature = null
+        aiInsightsJob = viewModelScope.launch {
+            val cached = cachedAiInsight ?: aiInsightsCacheRepository.getInsight(
+                studentId = studentId,
+                focus = AiInsightsFocus.DASHBOARD,
+                localeTag = localeTag
+            ).also { cachedAiInsight = it }
+            if (!force && cached != null && cached.signature == signature) {
+                lastAiInputSignature = signature
+                _aiInsightsState.value = AiInsightsUiState(
+                    status = AiStatus.Success,
+                    insight = cached.insight
+                )
+                return@launch
+            }
+            pendingGenerationSignature = signature
+            _aiInsightsState.value = AiInsightsUiState(status = AiStatus.Loading)
+            val computation = generateAiInsightsUseCase(
+                studentId = studentId,
+                locale = locale,
+                focus = AiInsightsFocus.DASHBOARD
+            )
+            pendingGenerationSignature = null
+            handleAiComputationResult(
+                computation = computation,
+                localeTag = localeTag
+            )
+        }
+    }
+
+    private suspend fun handleAiComputationResult(
+        computation: AiInsightsComputation,
+        localeTag: String
+    ) {
+        when (val result = computation.result) {
+            is AiInsightsResult.Success -> {
+                val cached = CachedAiInsight(
+                    studentId = studentId,
+                    focus = AiInsightsFocus.DASHBOARD,
+                    localeTag = localeTag,
+                    insight = result.insight,
+                    signature = computation.signature,
+                    updatedAt = System.currentTimeMillis()
+                )
+                aiInsightsCacheRepository.saveInsight(cached)
+                cachedAiInsight = cached
+                lastAiInputSignature = computation.signature
+                _aiInsightsState.value = AiInsightsUiState(
+                    status = AiStatus.Success,
+                    insight = result.insight
+                )
+            }
+            AiInsightsResult.NotEnoughData -> {
+                aiInsightsCacheRepository.clearInsight(
+                    studentId = studentId,
+                    focus = AiInsightsFocus.DASHBOARD,
+                    localeTag = localeTag
+                )
+                cachedAiInsight = null
+                lastAiInputSignature = computation.signature
+                _aiInsightsState.value = mapAiResultToUiState(result)
+            }
+            else -> {
+                lastAiInputSignature = computation.signature
+                _aiInsightsState.value = mapAiResultToUiState(result)
+            }
+        }
+    }
+
+    private fun mapAiResultToUiState(result: AiInsightsResult): AiInsightsUiState = when (result) {
+        is AiInsightsResult.Success -> AiInsightsUiState(
+            status = AiStatus.Success,
+            insight = result.insight
+        )
+        AiInsightsResult.MissingApiKey -> AiInsightsUiState(
+            status = AiStatus.Error,
+            messageRes = R.string.ai_missing_api_key_message
+        )
+        AiInsightsResult.NotEnoughData -> AiInsightsUiState(
+            status = AiStatus.NoData,
+            messageRes = R.string.dashboard_ai_no_data_message
+        )
+        AiInsightsResult.EmptyResponse -> AiInsightsUiState(
+            status = AiStatus.Error,
+            messageRes = R.string.ai_empty_response_message
+        )
+        is AiInsightsResult.Error -> AiInsightsUiState(
+            status = AiStatus.Error,
+            messageRes = R.string.ai_generic_error_message
+        )
     }
 
     suspend fun addLesson(duration: String, notes: String) {

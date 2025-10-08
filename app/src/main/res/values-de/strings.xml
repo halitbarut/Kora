@@ -97,6 +97,15 @@
     <string name="dashboard_log_lesson_mark_not_done_button">Als nicht stattgefunden markieren</string>
     <string name="dashboard_ai_insights_title">KI-Assistent-Einblicke</string>
     <string name="dashboard_ai_insights_body">Elifs Leistung in "Algebra" hat sich deutlich verbessert. Die jüngsten Hausaufgabenergebnisse in "Geometrie" weisen jedoch auf Nachholbedarf hin. Plane für die nächste Stunde ein Arbeitsblatt mit Fokus auf Dreiecke.</string>
+    <string name="ai_loading_message">Personalisierte Einblicke werden erstellt...</string>
+    <string name="ai_retry_action">Erneut versuchen</string>
+    <string name="ai_generate_again_action">Erneut generieren</string>
+    <string name="ai_missing_api_key_message">Füge deinen Gemini-API-Schlüssel in der local.properties hinzu, um KI-Einblicke zu aktivieren.</string>
+    <string name="ai_empty_response_message">Die KI hat keine Einblicke zurückgegeben. Bitte versuche es erneut.</string>
+    <string name="ai_generic_error_message">KI-Einblicke konnten gerade nicht abgerufen werden. Bitte später erneut versuchen.</string>
+    <string name="ai_generic_no_data_message">Füge mehr Aktivitäten hinzu, um KI-Einblicke freizuschalten.</string>
+    <string name="dashboard_ai_no_data_message">Protokolliere Unterrichtsstunden oder Hausaufgaben, um Dashboard-Einblicke zu erhalten.</string>
+    <string name="homework_ai_no_data_message">Füge Hausaufgabedetails für %1$s hinzu, um KI-Einblicke zu erhalten.</string>
     <string name="dashboard_settings_icon_description">Einstellungen öffnen</string>
     <string name="top_bar_navigate_to_student_list_content_description">Zur Schülerliste wechseln</string>
 
