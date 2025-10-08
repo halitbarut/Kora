@@ -1,6 +1,10 @@
 package com.barutdev.kora.ui.screens.homework
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +28,7 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,8 +38,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,10 +59,13 @@ import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.HomeworkStatus
 import com.barutdev.kora.navigation.KoraDestination
 import com.barutdev.kora.ui.screens.homework.components.HomeworkDialog
+import com.barutdev.kora.ui.theme.KoraAnimationSpecs
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.ui.theme.StatusGreen
 import com.barutdev.kora.ui.theme.StatusYellow
+import com.barutdev.kora.ui.model.AiInsightsUiState
+import com.barutdev.kora.ui.model.AiStatus
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -81,6 +92,12 @@ fun HomeworkScreen(
     val homeworkList by viewModel.homework.collectAsStateWithLifecycle()
     val isDialogVisible by viewModel.isDialogVisible.collectAsStateWithLifecycle()
     val editingHomework by viewModel.editingHomework.collectAsStateWithLifecycle()
+    val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
+    val locale = LocalLocale.current
+
+    LaunchedEffect(viewModel.studentId, locale) {
+        viewModel.ensureAiInsights(locale)
+    }
 
     HomeworkDialog(
         showDialog = isDialogVisible,
@@ -104,13 +121,15 @@ fun HomeworkScreen(
         studentId = viewModel.studentId,
         studentName = studentName,
         homeworkList = homeworkList,
+        aiInsightsState = aiInsightsState,
+        onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
         onAddHomework = viewModel::showAddHomeworkDialog,
         onHomeworkClick = viewModel::showEditHomeworkDialog,
         modifier = modifier
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun HomeworkScreenContent(
     currentRoute: String?,
@@ -119,6 +138,8 @@ private fun HomeworkScreenContent(
     studentId: Int,
     studentName: String,
     homeworkList: List<Homework>,
+    aiInsightsState: AiInsightsUiState,
+    onGenerateAiInsights: () -> Unit,
     onAddHomework: () -> Unit,
     onHomeworkClick: (Homework) -> Unit,
     modifier: Modifier = Modifier
@@ -238,7 +259,12 @@ private fun HomeworkScreenContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                AiAssistantCard(studentName = displayedStudentName)
+                AiAssistantCard(
+                    studentName = displayedStudentName,
+                    aiState = aiInsightsState,
+                    onGenerateAgain = onGenerateAiInsights,
+                    modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
+                )
             }
             item {
                 Text(
@@ -259,7 +285,8 @@ private fun HomeworkScreenContent(
                     HomeworkListItem(
                         homework = homework,
                         locale = locale,
-                        onClick = onHomeworkClick
+                        onClick = onHomeworkClick,
+                        modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
                     )
                 }
             }
@@ -267,32 +294,101 @@ private fun HomeworkScreenContent(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun AiAssistantCard(
     studentName: String,
+    aiState: AiInsightsUiState,
+    onGenerateAgain: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec),
         shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = koraStringResource(id = R.string.homework_ai_card_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text(
-                text = koraStringResource(
-                    id = R.string.homework_ai_card_body,
-                    studentName
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            AnimatedContent(
+                targetState = aiState,
+                transitionSpec = { KoraAnimationSpecs.cardContentTransform() },
+                label = "homework_ai_card"
+            ) { state ->
+                when (state.status) {
+                    AiStatus.Success -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            state.insight?.let { insight ->
+                                Text(
+                                    text = insight,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_generate_again_action))
+                            }
+                        }
+                    }
+                    AiStatus.Error -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val message = state.messageRes?.let { resId ->
+                                koraStringResource(id = resId)
+                            } ?: koraStringResource(id = R.string.ai_generic_error_message)
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_retry_action))
+                            }
+                        }
+                    }
+                    AiStatus.NoData -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val message = state.messageRes?.let { resId ->
+                                when (resId) {
+                                    R.string.homework_ai_no_data_message ->
+                                        koraStringResource(id = resId, studentName)
+                                    else -> koraStringResource(id = resId)
+                                }
+                            } ?: koraStringResource(id = R.string.ai_generic_no_data_message)
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_generate_again_action))
+                            }
+                        }
+                    }
+                    AiStatus.Loading, AiStatus.Idle -> {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                text = koraStringResource(id = R.string.ai_loading_message),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -315,6 +411,7 @@ private fun HomeworkListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec)
             .clickable { onClick(homework) },
         shape = MaterialTheme.shapes.large
     ) {
@@ -399,6 +496,10 @@ private fun HomeworkScreenPreview() {
             performanceNotes = null
         )
     )
+    val previewAiState = AiInsightsUiState(
+        status = AiStatus.Success,
+        insight = "Elif completed her recent assignments accurately. Introduce mixed-problem sets to reinforce multi-step reasoning."
+    )
     KoraTheme {
         HomeworkScreenContent(
             currentRoute = KoraDestination.Homework.route,
@@ -407,6 +508,8 @@ private fun HomeworkScreenPreview() {
             studentId = 1,
             studentName = "Elif Yılmaz",
             homeworkList = homeworkList,
+            aiInsightsState = previewAiState,
+            onGenerateAiInsights = {},
             onAddHomework = {},
             onHomeworkClick = {},
             modifier = Modifier

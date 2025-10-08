@@ -1,6 +1,10 @@
 package com.barutdev.kora.ui.screens.dashboard
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Assignment
@@ -21,6 +26,7 @@ import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,8 +35,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,8 +58,11 @@ import com.barutdev.kora.navigation.KoraDestination
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.screens.dashboard.components.AddLessonDialog
 import com.barutdev.kora.ui.screens.dashboard.components.LogLessonDialog
+import com.barutdev.kora.ui.theme.KoraAnimationSpecs
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
+import com.barutdev.kora.ui.model.AiInsightsUiState
+import com.barutdev.kora.ui.model.AiStatus
 import com.barutdev.kora.util.formatCurrency
 import java.text.NumberFormat
 import java.time.Instant
@@ -83,8 +94,16 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val userPreferences = LocalUserPreferences.current
+    val locale = LocalLocale.current
+
+    LaunchedEffect(uiState.studentId, locale) {
+        if (uiState.studentId != null) {
+            viewModel.ensureAiInsights(locale)
+        }
+    }
 
     AddLessonDialog(
         showDialog = uiState.isAddLessonDialogVisible,
@@ -119,6 +138,8 @@ fun DashboardScreen(
             }
         },
         currencyCode = userPreferences.currencyCode,
+        aiInsightsState = aiInsightsState,
+        onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
         modifier = modifier
     )
 }
@@ -133,6 +154,8 @@ private fun DashboardScreenContent(
     onLogLessonClick: (Lesson) -> Unit,
     onMarkCurrentCycleAsPaid: () -> Unit,
     currencyCode: String,
+    aiInsightsState: AiInsightsUiState,
+    onGenerateAiInsights: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val navigationItems = remember {
@@ -222,6 +245,8 @@ private fun DashboardScreenContent(
             onLogLessonClick = onLogLessonClick,
             onMarkCurrentCycleAsPaid = onMarkCurrentCycleAsPaid,
             currencyCode = currencyCode,
+            aiInsightsState = aiInsightsState,
+            onGenerateAiInsights = onGenerateAiInsights,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -276,6 +301,8 @@ private fun DashboardBody(
     onLogLessonClick: (Lesson) -> Unit,
     onMarkCurrentCycleAsPaid: () -> Unit,
     currencyCode: String,
+    aiInsightsState: AiInsightsUiState,
+    onGenerateAiInsights: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val locale = LocalLocale.current
@@ -307,11 +334,15 @@ private fun DashboardBody(
             onLessonClick = onLogLessonClick,
             locale = locale
         )
-        AiAssistantCard()
+        AiAssistantCard(
+            aiState = aiInsightsState,
+            onGenerateAgain = onGenerateAiInsights
+        )
     }
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun LogPastLessonsCard(
     pastLessons: List<Lesson>,
     onLessonClick: (Lesson) -> Unit,
@@ -329,7 +360,9 @@ private fun LogPastLessonsCard(
         }
     }
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec),
         shape = MaterialTheme.shapes.large
     ) {
         Column(
@@ -423,7 +456,9 @@ private fun PaymentTrackingCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec),
         shape = MaterialTheme.shapes.large
     ) {
         Column(
@@ -467,6 +502,7 @@ private fun PaymentTrackingCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CompletedLessonsCard(
     lessons: List<Lesson>,
@@ -501,7 +537,9 @@ private fun CompletedLessonsCard(
         }
     }
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec),
         shape = MaterialTheme.shapes.large
     ) {
         Column(
@@ -522,7 +560,8 @@ private fun CompletedLessonsCard(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items.forEach { item ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -565,6 +604,7 @@ private fun CompletedLessonsCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun UpcomingLessonsCard(
     upcomingLessons: List<Lesson>,
@@ -604,6 +644,7 @@ private fun UpcomingLessonsCard(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     formattedLessons.forEach { formattedDate ->
                         Row(
+                            modifier = Modifier,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -624,10 +665,17 @@ private fun UpcomingLessonsCard(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun AiAssistantCard(modifier: Modifier = Modifier) {
+private fun AiAssistantCard(
+    aiState: AiInsightsUiState,
+    onGenerateAgain: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = KoraAnimationSpecs.contentSizeSpec),
         shape = MaterialTheme.shapes.large
     ) {
         Column(
@@ -648,11 +696,72 @@ private fun AiAssistantCard(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-            Text(
-                text = koraStringResource(id = R.string.dashboard_ai_insights_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            AnimatedContent(
+                targetState = aiState,
+                transitionSpec = { KoraAnimationSpecs.cardContentTransform() },
+                label = "dashboard_ai_card"
+            ) { state ->
+                when (state.status) {
+                    AiStatus.Success -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            state.insight?.let { insight ->
+                                Text(
+                                    text = insight,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_generate_again_action))
+                            }
+                        }
+                    }
+                    AiStatus.Error -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val message = state.messageRes?.let { koraStringResource(id = it) }
+                                ?: koraStringResource(id = R.string.ai_generic_error_message)
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_retry_action))
+                            }
+                        }
+                    }
+                    AiStatus.NoData -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val message = state.messageRes?.let { koraStringResource(id = it) }
+                                ?: koraStringResource(id = R.string.ai_generic_no_data_message)
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = onGenerateAgain) {
+                                Text(text = koraStringResource(id = R.string.ai_generate_again_action))
+                            }
+                        }
+                    }
+                    AiStatus.Loading, AiStatus.Idle -> {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                text = koraStringResource(id = R.string.ai_loading_message),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -706,6 +815,10 @@ private fun DashboardScreenPreview() {
             )
         )
     )
+    val previewAiState = AiInsightsUiState(
+        status = AiStatus.Success,
+        insight = "Elif's performance in Algebra has improved while Geometry homework needs reinforcement. Plan targeted triangle exercises next."
+    )
     KoraTheme {
         DashboardScreenContent(
             currentRoute = KoraDestination.Dashboard.route,
@@ -715,7 +828,9 @@ private fun DashboardScreenPreview() {
             onNavigateToStudentList = {},
             onLogLessonClick = {},
             onMarkCurrentCycleAsPaid = {},
-            currencyCode = "TRY"
+            currencyCode = "TRY",
+            aiInsightsState = previewAiState,
+            onGenerateAiInsights = {}
         )
     }
 }

@@ -16,6 +16,7 @@ navigation = "2.8.3"
 room = "2.6.1"
 material3 = "1.4.0"
 datastore = "1.1.1"
+generativeAi = "0.7.0"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
@@ -46,6 +47,8 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+google-ai-generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeAi" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
