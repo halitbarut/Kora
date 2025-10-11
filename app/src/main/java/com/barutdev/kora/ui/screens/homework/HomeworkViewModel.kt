@@ -24,6 +24,7 @@ import com.barutdev.kora.ui.model.AiStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -95,7 +97,9 @@ class HomeworkViewModel @Inject constructor(
         viewModelScope.launch {
             combine(student, homework) { studentSnapshot, homeworkSnapshot ->
                 studentSnapshot to homeworkSnapshot
-            }.collect { (studentSnapshot, homeworkSnapshot) ->
+            }
+                .flowOn(Dispatchers.Default)
+                .collect { (studentSnapshot, homeworkSnapshot) ->
                 latestStudentSnapshot = studentSnapshot
                 latestHomeworkSnapshot = homeworkSnapshot
                 val locale = lastRequestedLocale ?: return@collect

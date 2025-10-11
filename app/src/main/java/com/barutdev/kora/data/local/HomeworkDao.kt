@@ -15,4 +15,13 @@ interface HomeworkDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(homework: HomeworkEntity)
+
+    @Query("SELECT * FROM homework")
+    suspend fun getHomeworkSnapshot(): List<HomeworkEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(homework: List<HomeworkEntity>)
+
+    @Query("DELETE FROM homework")
+    suspend fun deleteAll()
 }

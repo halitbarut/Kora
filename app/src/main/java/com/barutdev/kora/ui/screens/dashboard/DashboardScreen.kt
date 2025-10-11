@@ -55,7 +55,12 @@ import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.navigation.KoraDestination
+import com.barutdev.kora.navigation.RouteKey
+import com.barutdev.kora.navigation.routeKey
+import com.barutdev.kora.navigation.toRouteKey
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
+import com.barutdev.kora.ui.screens.common.StudentNameUiStatus
+import com.barutdev.kora.ui.screens.common.deriveStudentNameUiStatus
 import com.barutdev.kora.ui.screens.dashboard.components.AddLessonDialog
 import com.barutdev.kora.ui.screens.dashboard.components.LogLessonDialog
 import com.barutdev.kora.ui.theme.KoraAnimationSpecs
@@ -74,6 +79,7 @@ import kotlinx.coroutines.launch
 
 private data class DashboardNavItem(
     val destination: KoraDestination,
+    val routeKey: RouteKey,
     val icon: ImageVector,
     @StringRes val labelRes: Int
 )
@@ -162,25 +168,33 @@ private fun DashboardScreenContent(
         listOf(
             DashboardNavItem(
                 destination = KoraDestination.Dashboard,
+                routeKey = KoraDestination.Dashboard.routeKey(),
                 icon = Icons.Outlined.Dashboard,
                 labelRes = R.string.dashboard_title
             ),
             DashboardNavItem(
                 destination = KoraDestination.Calendar,
+                routeKey = KoraDestination.Calendar.routeKey(),
                 icon = Icons.Outlined.CalendarMonth,
                 labelRes = R.string.calendar_title
             ),
             DashboardNavItem(
                 destination = KoraDestination.Homework,
+                routeKey = KoraDestination.Homework.routeKey(),
                 icon = Icons.Outlined.Assignment,
                 labelRes = R.string.homework_title
             )
         )
     }
-    val studentName = if (uiState.studentName.isNotBlank()) {
-        uiState.studentName
-    } else {
-        koraStringResource(id = R.string.dashboard_student_name)
+    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
+    val studentNameStatus = deriveStudentNameUiStatus(
+        studentName = uiState.studentName,
+        hasStudentReference = uiState.studentId != null
+    )
+    val studentName = when (studentNameStatus) {
+        StudentNameUiStatus.Loaded -> uiState.studentName
+        StudentNameUiStatus.Loading -> koraStringResource(id = R.string.student_name_loading_placeholder)
+        StudentNameUiStatus.Missing -> koraStringResource(id = R.string.student_name_missing_placeholder)
     }
     val studentId = uiState.studentId
 
@@ -197,10 +211,17 @@ private fun DashboardScreenContent(
             NavigationBar {
                 navigationItems.forEach { item ->
                     val label = koraStringResource(id = item.labelRes)
+                    val isSelected = currentRouteKey == item.routeKey
+                    val isEnabled = when (item.destination) {
+                        KoraDestination.Dashboard,
+                        KoraDestination.Calendar,
+                        KoraDestination.Homework -> studentId != null
+                        else -> true
+                    }
                     NavigationBarItem(
-                        selected = currentRoute == item.destination.route,
+                        selected = isSelected,
                         onClick = {
-                            if (currentRoute == item.destination.route) {
+                            if (!isEnabled || isSelected) {
                                 return@NavigationBarItem
                             }
                             when (item.destination) {
@@ -216,12 +237,7 @@ private fun DashboardScreenContent(
                                 else -> onNavigate(item.destination.route)
                             }
                         },
-                        enabled = when (item.destination) {
-                            KoraDestination.Dashboard,
-                            KoraDestination.Calendar,
-                            KoraDestination.Homework -> studentId != null
-                            else -> true
-                        },
+                        enabled = isEnabled,
                         icon = {
                             Icon(
                                 imageVector = item.icon,

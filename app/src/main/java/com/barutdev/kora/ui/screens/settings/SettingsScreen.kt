@@ -14,15 +14,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.EventNote
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sell
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +39,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,13 +63,26 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.UserPreferences
 import com.barutdev.kora.ui.theme.KoraTheme
+import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.util.formatCurrency
+import android.text.format.DateFormat
+import android.util.Log
+import java.io.IOException
+import java.time.LocalTime
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
+import kotlinx.coroutines.launch
+import kotlin.text.Charsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +95,89 @@ fun SettingsScreen(
     val isLanguageDialogVisible by viewModel.isLanguageDialogVisible.collectAsStateWithLifecycle()
     val isCurrencyDialogVisible by viewModel.isCurrencyDialogVisible.collectAsStateWithLifecycle()
     val isHourlyRateDialogVisible by viewModel.isHourlyRateDialogVisible.collectAsStateWithLifecycle()
+    var showLessonReminderTimeDialog by rememberSaveable { mutableStateOf(false) }
+    var showLogReminderTimeDialog by rememberSaveable { mutableStateOf(false) }
+    val locale = LocalLocale.current
+    val lessonReminderTimeText = remember(
+        userPreferences.lessonReminderHour,
+        userPreferences.lessonReminderMinute,
+        locale
+    ) {
+        formatReminderTime(
+            hour = userPreferences.lessonReminderHour,
+            minute = userPreferences.lessonReminderMinute,
+            locale = locale
+        )
+    }
+    val logReminderTimeText = remember(
+        userPreferences.logReminderHour,
+        userPreferences.logReminderMinute,
+        locale
+    ) {
+        formatReminderTime(
+            hour = userPreferences.logReminderHour,
+            minute = userPreferences.logReminderMinute,
+            locale = locale
+        )
+    }
+    var showResetConfirmation by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val backupSuccessMessage = koraStringResource(id = R.string.settings_backup_success)
+    val backupFailureMessage = koraStringResource(id = R.string.settings_backup_failure)
+    val restoreSuccessMessage = koraStringResource(id = R.string.settings_restore_success)
+    val restoreFailureMessage = koraStringResource(id = R.string.settings_restore_failure)
+    val resetSuccessMessage = koraStringResource(id = R.string.settings_reset_success)
+    val resetFailureMessage = koraStringResource(id = R.string.settings_reset_failure)
+    val backupFileNameFormatter = remember { DateTimeFormatter.ofPattern("yyyyMMdd_HHmm") }
+
+    val backupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        coroutineScope.launch {
+            val exportResult = viewModel.exportCsv()
+            exportResult.onSuccess { csv ->
+                val writeResult = runCatching {
+                    context.contentResolver.openOutputStream(uri)?.use { stream ->
+                        stream.write(csv.toByteArray(Charsets.UTF_8))
+                        stream.flush()
+                    } ?: throw IOException("Unable to open output stream")
+                }
+                if (writeResult.isSuccess) {
+                    snackbarHostState.showSnackbar(backupSuccessMessage)
+                } else {
+                    Log.e("SettingsScreen", "Failed to write backup", writeResult.exceptionOrNull())
+                    snackbarHostState.showSnackbar(backupFailureMessage)
+                }
+            }.onFailure { error ->
+                Log.e("SettingsScreen", "Failed to export backup", error)
+                snackbarHostState.showSnackbar(backupFailureMessage)
+            }
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        coroutineScope.launch {
+            val csvResult = runCatching {
+                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                    reader.readText()
+                } ?: throw IOException("Unable to open input stream")
+            }
+            csvResult.onSuccess { csv ->
+                val importResult = viewModel.importCsv(csv)
+                if (importResult.isSuccess) {
+                    snackbarHostState.showSnackbar(restoreSuccessMessage)
+                } else {
+                    Log.e("SettingsScreen", "Failed to import backup", importResult.exceptionOrNull())
+                    snackbarHostState.showSnackbar(restoreFailureMessage)
+                }
+            }.onFailure { error ->
+                Log.e("SettingsScreen", "Failed to read backup", error)
+                snackbarHostState.showSnackbar(restoreFailureMessage)
+            }
+        }
+    }
 
     if (isLanguageDialogVisible) {
         LanguageSelectionDialog(
@@ -102,8 +208,57 @@ fun SettingsScreen(
         )
     }
 
+    if (showLessonReminderTimeDialog) {
+        ReminderTimeDialog(
+            title = koraStringResource(id = R.string.settings_lesson_reminder_time_dialog_title),
+            confirmLabel = koraStringResource(id = R.string.dialog_action_save),
+            dismissLabel = koraStringResource(id = R.string.dialog_action_cancel),
+            initialHour = userPreferences.lessonReminderHour,
+            initialMinute = userPreferences.lessonReminderMinute,
+            onDismiss = { showLessonReminderTimeDialog = false },
+            onConfirm = { hour, minute ->
+                showLessonReminderTimeDialog = false
+                viewModel.updateLessonReminderTime(hour, minute)
+            }
+        )
+    }
+
+    if (showLogReminderTimeDialog) {
+        ReminderTimeDialog(
+            title = koraStringResource(id = R.string.settings_log_reminder_time_dialog_title),
+            confirmLabel = koraStringResource(id = R.string.dialog_action_save),
+            dismissLabel = koraStringResource(id = R.string.dialog_action_cancel),
+            initialHour = userPreferences.logReminderHour,
+            initialMinute = userPreferences.logReminderMinute,
+            onDismiss = { showLogReminderTimeDialog = false },
+            onConfirm = { hour, minute ->
+                showLogReminderTimeDialog = false
+                viewModel.updateLogReminderTime(hour, minute)
+            }
+        )
+    }
+
+    if (showResetConfirmation) {
+        ResetConfirmationDialog(
+            onConfirm = {
+                showResetConfirmation = false
+                coroutineScope.launch {
+                    val result = viewModel.resetAllData()
+                    if (result.isSuccess) {
+                        snackbarHostState.showSnackbar(resetSuccessMessage)
+                    } else {
+                        Log.e("SettingsScreen", "Failed to reset data", result.exceptionOrNull())
+                        snackbarHostState.showSnackbar(resetFailureMessage)
+                    }
+                }
+            },
+            onDismiss = { showResetConfirmation = false }
+        )
+    }
+
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -177,6 +332,22 @@ fun SettingsScreen(
                         checked = userPreferences.logReminderEnabled,
                         onCheckedChange = viewModel::updateLogReminderEnabled
                     )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.Schedule,
+                        iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminder_time_content_description),
+                        title = koraStringResource(id = R.string.settings_lesson_reminder_time_label),
+                        value = lessonReminderTimeText,
+                        onClick = { showLessonReminderTimeDialog = true }
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.AccessTime,
+                        iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_time_content_description),
+                        title = koraStringResource(id = R.string.settings_log_reminder_time_label),
+                        value = logReminderTimeText,
+                        onClick = { showLogReminderTimeDialog = true }
+                    )
                 }
             }
             item {
@@ -192,6 +363,42 @@ fun SettingsScreen(
                             currencyCode = userPreferences.currencyCode
                         ),
                         onClick = viewModel::showHourlyRateDialog
+                    )
+                }
+            }
+            item {
+                SettingsSection(
+                    title = koraStringResource(id = R.string.settings_section_data)
+                ) {
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.FileDownload,
+                        iconContentDescription = koraStringResource(id = R.string.settings_backup_content_description),
+                        title = koraStringResource(id = R.string.settings_backup_title),
+                        value = koraStringResource(id = R.string.settings_backup_action_value),
+                        onClick = {
+                            val fileName = "kora_backup_${LocalDateTime.now().format(backupFileNameFormatter)}.csv"
+                            backupLauncher.launch(fileName)
+                        }
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.FileUpload,
+                        iconContentDescription = koraStringResource(id = R.string.settings_restore_content_description),
+                        title = koraStringResource(id = R.string.settings_restore_title),
+                        value = koraStringResource(id = R.string.settings_restore_action_value),
+                        onClick = {
+                            restoreLauncher.launch(arrayOf("text/*", "application/*"))
+                        }
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.DeleteForever,
+                        iconContentDescription = koraStringResource(id = R.string.settings_reset_content_description),
+                        title = koraStringResource(id = R.string.settings_reset_title),
+                        value = koraStringResource(id = R.string.settings_reset_action_value),
+                        onClick = {
+                            showResetConfirmation = true
+                        }
                     )
                 }
             }
@@ -379,6 +586,70 @@ private fun LanguageSelectionDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimeDialog(
+    title: String,
+    confirmLabel: String,
+    dismissLabel: String,
+    initialHour: Int,
+    initialMinute: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (hour: Int, minute: Int) -> Unit
+) {
+    val context = LocalContext.current
+    val is24Hour = remember { DateFormat.is24HourFormat(context) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = is24Hour
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = {
+            TimePicker(state = timePickerState)
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }) {
+                Text(text = confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = dismissLabel)
+            }
+        }
+    )
+}
+
+@Composable
+private fun ResetConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = koraStringResource(id = R.string.settings_reset_dialog_title))
+        },
+        text = {
+            Text(text = koraStringResource(id = R.string.settings_reset_dialog_message))
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = koraStringResource(id = R.string.settings_reset_dialog_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = koraStringResource(id = R.string.dialog_action_cancel))
+            }
+        }
+    )
+}
+
 @Composable
 private fun CurrencySelectionDialog(
     currentCurrency: String,
@@ -508,6 +779,16 @@ private fun formatHourlyRate(amount: Double, currencyCode: String): String {
     }
 }
 
+private fun formatReminderTime(hour: Int, minute: Int, locale: Locale): String {
+    val safeHour = hour.coerceIn(0, 23)
+    val safeMinute = minute.coerceIn(0, 59)
+    val time = LocalTime.of(safeHour, safeMinute)
+    val formatter = DateTimeFormatter
+        .ofLocalizedTime(FormatStyle.SHORT)
+        .withLocale(locale)
+    return time.format(formatter)
+}
+
 @androidx.annotation.StringRes
 private fun languageLabelRes(languageCode: String): Int = when (languageCode.lowercase(Locale.ROOT)) {
     "en" -> R.string.settings_language_option_en
@@ -533,7 +814,11 @@ private fun SettingsScreenPreview() {
         currencyCode = "TRY",
         defaultHourlyRate = 80.0,
         lessonRemindersEnabled = true,
-        logReminderEnabled = true
+        logReminderEnabled = true,
+        lessonReminderHour = 10,
+        lessonReminderMinute = 30,
+        logReminderHour = 19,
+        logReminderMinute = 15
     )
     KoraTheme {
         SettingsPreviewContent(preferences = previewPreferences)
@@ -599,6 +884,30 @@ private fun SettingsPreviewContent(preferences: UserPreferences) {
                         checked = preferences.logReminderEnabled,
                         onCheckedChange = {}
                     )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.Schedule,
+                        iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminder_time_content_description),
+                        title = koraStringResource(id = R.string.settings_lesson_reminder_time_label),
+                        value = formatReminderTime(
+                            hour = preferences.lessonReminderHour,
+                            minute = preferences.lessonReminderMinute,
+                            locale = Locale.getDefault()
+                        ),
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.AccessTime,
+                        iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_time_content_description),
+                        title = koraStringResource(id = R.string.settings_log_reminder_time_label),
+                        value = formatReminderTime(
+                            hour = preferences.logReminderHour,
+                            minute = preferences.logReminderMinute,
+                            locale = Locale.getDefault()
+                        ),
+                        onClick = {}
+                    )
                 }
             }
             item {
@@ -611,6 +920,33 @@ private fun SettingsPreviewContent(preferences: UserPreferences) {
                             amount = preferences.defaultHourlyRate,
                             currencyCode = preferences.currencyCode
                         ),
+                        onClick = {}
+                    )
+                }
+            }
+            item {
+                SettingsSection(title = koraStringResource(id = R.string.settings_section_data)) {
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.FileDownload,
+                        iconContentDescription = koraStringResource(id = R.string.settings_backup_content_description),
+                        title = koraStringResource(id = R.string.settings_backup_title),
+                        value = koraStringResource(id = R.string.settings_backup_action_value),
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.FileUpload,
+                        iconContentDescription = koraStringResource(id = R.string.settings_restore_content_description),
+                        title = koraStringResource(id = R.string.settings_restore_title),
+                        value = koraStringResource(id = R.string.settings_restore_action_value),
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    SettingNavigationRow(
+                        icon = Icons.Outlined.DeleteForever,
+                        iconContentDescription = koraStringResource(id = R.string.settings_reset_content_description),
+                        title = koraStringResource(id = R.string.settings_reset_title),
+                        value = koraStringResource(id = R.string.settings_reset_action_value),
                         onClick = {}
                     )
                 }

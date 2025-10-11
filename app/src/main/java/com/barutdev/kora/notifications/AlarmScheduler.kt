@@ -53,16 +53,56 @@ class AlarmScheduler @Inject constructor(
             includeContentExtras = true
         ) ?: return
 
-        if (!canScheduleExactAlarms()) {
-            Log.e(TAG, "Cannot schedule exact alarms. Permission not granted.")
-            return
-        }
-
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerAtMillis,
-            pendingIntent
+        scheduleExact(
+            triggerAtMillis = triggerAtMillis,
+            pendingIntent = pendingIntent
         )
+    }
+
+    private fun scheduleExact(
+        triggerAtMillis: Long,
+        pendingIntent: PendingIntent
+    ) {
+        try {
+            when {
+                canScheduleExactAlarms() -> {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+                }
+                else -> {
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMillis,
+                        pendingIntent
+                    )
+                }
+            }
+        } catch (securityException: SecurityException) {
+            Log.e(TAG, "Exact alarm scheduling failed, falling back to inexact", securityException)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            }
+        }
     }
 
     fun cancelLessonReminder(lessonId: Int, type: LessonReminderType) {
@@ -83,7 +123,12 @@ class AlarmScheduler @Inject constructor(
         }
     }
 
-    fun scheduleDailyLogReminder(triggerAtMillis: Long, languageCode: String) {
+    fun scheduleDailyLogReminder(
+        triggerAtMillis: Long,
+        languageCode: String,
+        hour: Int,
+        minute: Int
+    ) {
         val localizedContext = createLocalizedContext(languageCode)
         val title = localizedContext.getString(R.string.notification_lesson_reminder_title)
         val message = localizedContext.getString(R.string.notification_log_reminder_message)
@@ -92,20 +137,19 @@ class AlarmScheduler @Inject constructor(
             title = title,
             message = message,
             languageCode = languageCode,
+            hour = hour,
+            minute = minute,
             flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             includeContentExtras = true
         ) ?: return
 
-        if (!canScheduleExactAlarms()) {
-            Log.e(TAG, "Cannot schedule exact alarms. Permission not granted.")
+        if (triggerAtMillis <= System.currentTimeMillis()) {
             return
         }
 
-        alarmManager.setInexactRepeating(
-            AlarmManager.RTC_WAKEUP,
-            triggerAtMillis,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent
+        scheduleExact(
+            triggerAtMillis = triggerAtMillis,
+            pendingIntent = pendingIntent
         )
     }
 
@@ -150,6 +194,8 @@ class AlarmScheduler @Inject constructor(
         title: String?,
         message: String?,
         languageCode: String?,
+        hour: Int? = null,
+        minute: Int? = null,
         flags: Int,
         includeContentExtras: Boolean
     ): PendingIntent? {
@@ -160,6 +206,8 @@ class AlarmScheduler @Inject constructor(
                 title?.let { putExtra(NotificationReceiver.EXTRA_NOTIFICATION_TITLE, it) }
                 message?.let { putExtra(NotificationReceiver.EXTRA_NOTIFICATION_MESSAGE, it) }
                 languageCode?.let { putExtra(NotificationReceiver.EXTRA_LANGUAGE_CODE, it) }
+                hour?.let { putExtra(NotificationReceiver.EXTRA_REMINDER_HOUR, it) }
+                minute?.let { putExtra(NotificationReceiver.EXTRA_REMINDER_MINUTE, it) }
             }
         }
 

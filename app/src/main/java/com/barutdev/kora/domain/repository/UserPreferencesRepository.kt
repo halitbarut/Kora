@@ -18,4 +18,10 @@ interface UserPreferencesRepository {
     suspend fun updateLessonRemindersEnabled(isEnabled: Boolean)
 
     suspend fun updateLogReminderEnabled(isEnabled: Boolean)
+
+    suspend fun updateLessonReminderTime(hour: Int, minute: Int)
+
+    suspend fun updateLogReminderTime(hour: Int, minute: Int)
+
+    suspend fun resetPreferences()
 }

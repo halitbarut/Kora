@@ -27,7 +27,11 @@ class AppViewModel @Inject constructor(
         currencyCode = defaultCurrency,
         defaultHourlyRate = 0.0,
         lessonRemindersEnabled = false,
-        logReminderEnabled = false
+        logReminderEnabled = false,
+        lessonReminderHour = 9,
+        lessonReminderMinute = 0,
+        logReminderHour = 20,
+        logReminderMinute = 0
     )
 
     val userPreferences: StateFlow<UserPreferences> = userPreferencesRepository.userPreferences
