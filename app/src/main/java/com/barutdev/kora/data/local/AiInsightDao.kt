@@ -50,4 +50,7 @@ interface AiInsightDao {
         focus: String,
         localeTag: String
     )
+
+    @Query("DELETE FROM ai_insights")
+    suspend fun deleteAll()
 }

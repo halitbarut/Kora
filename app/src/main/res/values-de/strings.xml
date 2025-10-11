@@ -18,6 +18,9 @@
     <string name="homework_ai_card_title">KI-Hausaufgaben-Einblicke</string>
     <string name="homework_ai_card_body">Die Hausaufgabenleistung von %1$s zeigt einen Aufwärtstrend. Konzentriere dich auf anspruchsvollere Aufgaben, um das Momentum zu halten.</string>
     <string name="homework_assignments_section_title">Alle Aufgaben</string>
+    <!-- Gemeinsame Darstellung -->
+    <string name="student_name_loading_placeholder">Wird geladen...</string>
+    <string name="student_name_missing_placeholder">Schüler nicht verfügbar</string>
     <string name="homework_empty_state_message">Noch keine Hausaufgaben zugewiesen.</string>
     <string name="homework_due_date_label">Fällig: %1$s</string>
     <string name="homework_status_pending">Ausstehend</string>
@@ -67,6 +70,31 @@
     <string name="settings_lesson_reminders_content_description">Unterrichtserinnerungen ein- oder ausschalten</string>
     <string name="settings_log_reminder_label">Erinnerung zum Unterrichtsprotokoll</string>
     <string name="settings_log_reminder_content_description">Erinnerung zum Protokollieren nach dem Unterricht ein- oder ausschalten</string>
+    <string name="settings_lesson_reminder_time_label">Zeit für Unterrichtserinnerung</string>
+    <string name="settings_lesson_reminder_time_content_description">Zeit für Unterrichtserinnerung ändern</string>
+    <string name="settings_log_reminder_time_label">Zeit für Protokollerinnerung</string>
+    <string name="settings_log_reminder_time_content_description">Zeit für Protokollerinnerung ändern</string>
+    <string name="settings_lesson_reminder_time_dialog_title">Unterrichtserinnerung wählen</string>
+    <string name="settings_log_reminder_time_dialog_title">Protokollerinnerung wählen</string>
+    <string name="settings_section_data">Datenverwaltung</string>
+    <string name="settings_backup_title">Backup exportieren</string>
+    <string name="settings_backup_content_description">App-Daten als CSV exportieren</string>
+    <string name="settings_backup_action_value">CSV</string>
+    <string name="settings_restore_title">Backup importieren</string>
+    <string name="settings_restore_content_description">App-Daten aus CSV importieren</string>
+    <string name="settings_restore_action_value">CSV</string>
+    <string name="settings_reset_title">Alle Daten zurücksetzen</string>
+    <string name="settings_reset_content_description">Alle gespeicherten Daten löschen</string>
+    <string name="settings_reset_action_value">Alle Daten</string>
+    <string name="settings_reset_dialog_title">Alle Daten zurücksetzen?</string>
+    <string name="settings_reset_dialog_message">Dadurch werden alle Schüler, Stunden, Hausaufgaben, Einstellungen und KI-Einblicke dauerhaft gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
+    <string name="settings_reset_dialog_confirm">Zurücksetzen</string>
+    <string name="settings_backup_success">Backup wurde erfolgreich erstellt.</string>
+    <string name="settings_backup_failure">Backup konnte nicht erstellt werden. Bitte versuche es erneut.</string>
+    <string name="settings_restore_success">Backup wurde erfolgreich importiert.</string>
+    <string name="settings_restore_failure">Backup konnte nicht importiert werden. Bitte überprüfe die Datei und versuche es erneut.</string>
+    <string name="settings_reset_success">Alle Daten wurden erfolgreich gelöscht.</string>
+    <string name="settings_reset_failure">Daten konnten nicht zurückgesetzt werden. Bitte versuche es erneut.</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_student_name">Elif Yılmaz</string>

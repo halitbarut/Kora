@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.barutdev.kora.domain.model.UserPreferences
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
@@ -29,6 +30,13 @@ class UserPreferencesRepository @Inject constructor(
         val DEFAULT_HOURLY_RATE_KEY = doublePreferencesKey("default_hourly_rate")
         val LESSON_REMINDERS_ENABLED_KEY = booleanPreferencesKey("lesson_reminders_enabled")
         val LOG_REMINDER_ENABLED_KEY = booleanPreferencesKey("log_reminder_enabled")
+        val LESSON_REMINDER_HOUR_KEY = intPreferencesKey("lesson_reminder_hour")
+        val LESSON_REMINDER_MINUTE_KEY = intPreferencesKey("lesson_reminder_minute")
+        val LOG_REMINDER_HOUR_KEY = intPreferencesKey("log_reminder_hour")
+        val LOG_REMINDER_MINUTE_KEY = intPreferencesKey("log_reminder_minute")
+        const val DEFAULT_LESSON_REMINDER_HOUR = 9
+        const val DEFAULT_REMINDER_MINUTE = 0
+        const val DEFAULT_LOG_REMINDER_HOUR = 20
     }
 
     override val userPreferences: Flow<UserPreferences> = dataStore.data
@@ -45,7 +53,11 @@ class UserPreferencesRepository @Inject constructor(
                 currencyCode = preferences[CURRENCY_KEY] ?: defaultCurrency,
                 defaultHourlyRate = preferences[DEFAULT_HOURLY_RATE_KEY] ?: 0.0,
                 lessonRemindersEnabled = preferences[LESSON_REMINDERS_ENABLED_KEY] ?: false,
-                logReminderEnabled = preferences[LOG_REMINDER_ENABLED_KEY] ?: false
+                logReminderEnabled = preferences[LOG_REMINDER_ENABLED_KEY] ?: false,
+                lessonReminderHour = preferences[LESSON_REMINDER_HOUR_KEY] ?: DEFAULT_LESSON_REMINDER_HOUR,
+                lessonReminderMinute = preferences[LESSON_REMINDER_MINUTE_KEY] ?: DEFAULT_REMINDER_MINUTE,
+                logReminderHour = preferences[LOG_REMINDER_HOUR_KEY] ?: DEFAULT_LOG_REMINDER_HOUR,
+                logReminderMinute = preferences[LOG_REMINDER_MINUTE_KEY] ?: DEFAULT_REMINDER_MINUTE
             )
         }
 
@@ -83,6 +95,26 @@ class UserPreferencesRepository @Inject constructor(
     override suspend fun updateLogReminderEnabled(isEnabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[LOG_REMINDER_ENABLED_KEY] = isEnabled
+        }
+    }
+
+    override suspend fun updateLessonReminderTime(hour: Int, minute: Int) {
+        dataStore.edit { preferences ->
+            preferences[LESSON_REMINDER_HOUR_KEY] = hour
+            preferences[LESSON_REMINDER_MINUTE_KEY] = minute
+        }
+    }
+
+    override suspend fun updateLogReminderTime(hour: Int, minute: Int) {
+        dataStore.edit { preferences ->
+            preferences[LOG_REMINDER_HOUR_KEY] = hour
+            preferences[LOG_REMINDER_MINUTE_KEY] = minute
+        }
+    }
+
+    override suspend fun resetPreferences() {
+        dataStore.edit { preferences ->
+            preferences.clear()
         }
     }
 }

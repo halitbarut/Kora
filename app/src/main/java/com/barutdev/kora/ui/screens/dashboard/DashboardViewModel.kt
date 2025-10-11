@@ -30,6 +30,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flowOn
 
 data class DashboardUiState(
     val studentId: Int? = null,
@@ -205,7 +207,7 @@ class DashboardViewModel @Inject constructor(
         val totalHours = completedLessons.mapNotNull { it.durationInHours }.sum()
         val hourlyRate = student?.hourlyRate ?: 0.0
         DashboardUiState(
-            studentId = student?.id,
+            studentId = student?.id ?: this@DashboardViewModel.studentId,
             studentName = student?.fullName.orEmpty(),
             hourlyRate = hourlyRate,
             totalHours = totalHours,
@@ -218,7 +220,8 @@ class DashboardViewModel @Inject constructor(
             isLogLessonDialogVisible = isLogDialogVisible,
             lessonToLog = lessonToLog
         )
-    }.stateIn(
+    }.flowOn(Dispatchers.Default)
+        .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DashboardUiState()

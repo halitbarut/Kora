@@ -107,7 +107,9 @@ class CalendarViewModel @Inject constructor(
             lessonId = lessonId,
             lessonDateMillis = date,
             studentName = studentName,
-            languageCode = preferences.languageCode
+            languageCode = preferences.languageCode,
+            reminderHour = preferences.lessonReminderHour,
+            reminderMinute = preferences.lessonReminderMinute
         )
     }
 
@@ -172,13 +174,15 @@ class CalendarViewModel @Inject constructor(
         lessonId: Int,
         lessonDateMillis: Long,
         studentName: String,
-        languageCode: String
+        languageCode: String,
+        reminderHour: Int,
+        reminderMinute: Int
     ) {
         val lessonDateTime = Instant.ofEpochMilli(lessonDateMillis).atZone(zoneId)
 
         val dayOfTrigger = lessonDateTime
-            .withHour(DEFAULT_REMINDER_HOUR)
-            .withMinute(0)
+            .withHour(reminderHour)
+            .withMinute(reminderMinute)
             .withSecond(0)
             .withNano(0)
             .toInstant()
@@ -194,8 +198,8 @@ class CalendarViewModel @Inject constructor(
 
         val dayBeforeDateTime = lessonDateTime.minusDays(1)
         val dayBeforeTrigger = dayBeforeDateTime
-            .withHour(DEFAULT_REMINDER_HOUR)
-            .withMinute(0)
+            .withHour(reminderHour)
+            .withMinute(reminderMinute)
             .withSecond(0)
             .withNano(0)
             .toInstant()
@@ -208,9 +212,5 @@ class CalendarViewModel @Inject constructor(
             studentName = studentName,
             languageCode = languageCode
         )
-    }
-
-    companion object {
-        private const val DEFAULT_REMINDER_HOUR = 9
     }
 }

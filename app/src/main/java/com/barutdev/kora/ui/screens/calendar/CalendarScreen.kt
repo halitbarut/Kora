@@ -57,7 +57,12 @@ import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.navigation.KoraDestination
+import com.barutdev.kora.navigation.RouteKey
+import com.barutdev.kora.navigation.toRouteKey
+import com.barutdev.kora.navigation.routeKey
 import com.barutdev.kora.ui.screens.dashboard.components.LogLessonDialog
+import com.barutdev.kora.ui.screens.common.StudentNameUiStatus
+import com.barutdev.kora.ui.screens.common.deriveStudentNameUiStatus
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.ui.theme.StatusBlue
@@ -82,6 +87,7 @@ import kotlinx.coroutines.launch
 
 private data class CalendarNavItem(
     val destination: KoraDestination,
+    val routeKey: RouteKey,
     val icon: ImageVector,
     @StringRes val labelRes: Int
 )
@@ -154,10 +160,14 @@ private fun CalendarScreenContent(
     val zoneId = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zoneId) }
 
-    val displayedStudentName = if (studentName.isNotBlank()) {
-        studentName
-    } else {
-        koraStringResource(id = R.string.dashboard_student_name)
+    val studentNameStatus = deriveStudentNameUiStatus(
+        studentName = studentName,
+        hasStudentReference = studentId >= 0
+    )
+    val displayedStudentName = when (studentNameStatus) {
+        StudentNameUiStatus.Loaded -> studentName
+        StudentNameUiStatus.Loading -> koraStringResource(id = R.string.student_name_loading_placeholder)
+        StudentNameUiStatus.Missing -> koraStringResource(id = R.string.student_name_missing_placeholder)
     }
     val calendarLabel = koraStringResource(id = R.string.calendar_title)
 
@@ -171,21 +181,25 @@ private fun CalendarScreenContent(
     val selectedDateLessons = remember(selectedDate, lessonsByDate) {
         lessonsByDate[selectedDate].orEmpty()
     }
+    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
 
     val navigationItems = remember {
         listOf(
             CalendarNavItem(
                 destination = KoraDestination.Dashboard,
+                routeKey = KoraDestination.Dashboard.routeKey(),
                 icon = Icons.Outlined.Dashboard,
                 labelRes = R.string.dashboard_title
             ),
             CalendarNavItem(
                 destination = KoraDestination.Calendar,
+                routeKey = KoraDestination.Calendar.routeKey(),
                 icon = Icons.Outlined.CalendarMonth,
                 labelRes = R.string.calendar_title
             ),
             CalendarNavItem(
                 destination = KoraDestination.Homework,
+                routeKey = KoraDestination.Homework.routeKey(),
                 icon = Icons.Outlined.Assignment,
                 labelRes = R.string.homework_title
             )
@@ -246,6 +260,7 @@ private fun CalendarScreenContent(
             NavigationBar {
                 navigationItems.forEach { item ->
                     val label = koraStringResource(id = item.labelRes)
+                    val isSelected = currentRouteKey == item.routeKey
                     val enabled = when (item.destination) {
                         KoraDestination.Dashboard,
                         KoraDestination.Calendar,
@@ -253,9 +268,9 @@ private fun CalendarScreenContent(
                         else -> true
                     }
                     NavigationBarItem(
-                        selected = currentRoute == item.destination.route,
+                        selected = isSelected,
                         onClick = {
-                            if (!enabled || currentRoute == item.destination.route) {
+                            if (!enabled || isSelected) {
                                 return@NavigationBarItem
                             }
                             when (item.destination) {

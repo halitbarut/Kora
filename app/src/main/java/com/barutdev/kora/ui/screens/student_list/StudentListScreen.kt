@@ -35,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -143,7 +145,10 @@ private fun StudentListScreenContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(students) { studentWithDebt ->
+                items(
+                    items = students,
+                    key = { it.student.id }
+                ) { studentWithDebt ->
                     StudentListItem(
                         student = studentWithDebt,
                         currencyCode = currencyCode,
@@ -198,7 +203,12 @@ fun StudentListItem(
     modifier: Modifier = Modifier
 ) {
     val studentDetails = student.student
-    val formattedDebt = formatCurrency(student.currentDebt, currencyCode)
+    val formattedDebt by remember(student.currentDebt, currencyCode) {
+        derivedStateOf { formatCurrency(student.currentDebt, currencyCode) }
+    }
+    val studentInitials by remember(studentDetails.fullName) {
+        derivedStateOf { studentDetails.initials() }
+    }
 
     Card(
         modifier = modifier
@@ -225,7 +235,7 @@ fun StudentListItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = studentDetails.initials(),
+                    text = studentInitials,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer

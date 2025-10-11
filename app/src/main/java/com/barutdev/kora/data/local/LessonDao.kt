@@ -2,8 +2,9 @@ package com.barutdev.kora.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.Update
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.barutdev.kora.data.local.entity.LessonEntity
 import com.barutdev.kora.domain.model.LessonStatus
 import kotlinx.coroutines.flow.Flow
@@ -33,4 +34,13 @@ interface LessonDao {
         completedStatus: LessonStatus = LessonStatus.COMPLETED,
         paidStatus: LessonStatus = LessonStatus.PAID
     )
+
+    @Query("SELECT * FROM lessons")
+    suspend fun getLessonsSnapshot(): List<LessonEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(lessons: List<LessonEntity>)
+
+    @Query("DELETE FROM lessons")
+    suspend fun deleteAll()
 }

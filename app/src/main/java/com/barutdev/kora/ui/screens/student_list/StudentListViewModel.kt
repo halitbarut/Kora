@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 
 data class StudentWithDebt(
     val student: Student,
@@ -69,7 +71,8 @@ class StudentListViewModel @Inject constructor(
             students = studentsWithDebt,
             defaultHourlyRate = hourlyRate
         )
-    }.stateIn(
+    }.flowOn(Dispatchers.Default)
+        .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = StudentListUiState()

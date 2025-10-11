@@ -16,7 +16,11 @@
     <string name="homework_title">Homework</string>
     <string name="homework_top_bar_title">%1$s - %2$s</string>
     <string name="homework_ai_card_title">AI Homework Insights</string>
-    <string name="homework_ai_card_body">%1$s\'s homework performance is trending upward. Focus on more challenging problems to keep the momentum going.</string>    <string name="homework_assignments_section_title">All Assignments</string>
+    <string name="homework_ai_card_body">%1$s\'s homework performance is trending upward. Focus on more challenging problems to keep the momentum going.</string>
+    <string name="homework_assignments_section_title">All Assignments</string>
+    <!-- Shared Student Display -->
+    <string name="student_name_loading_placeholder">Loading...</string>
+    <string name="student_name_missing_placeholder">Student unavailable</string>
     <string name="homework_empty_state_message">No homework assigned yet.</string>
     <string name="homework_due_date_label">Due: %1$s</string>
     <string name="homework_status_pending">Pending</string>
@@ -66,6 +70,31 @@
     <string name="settings_lesson_reminders_content_description">Toggle lesson reminder notifications</string>
     <string name="settings_log_reminder_label">Post-Lesson Log Reminder</string>
     <string name="settings_log_reminder_content_description">Toggle post-lesson log reminder notifications</string>
+    <string name="settings_lesson_reminder_time_label">Lesson reminder time</string>
+    <string name="settings_lesson_reminder_time_content_description">Change lesson reminder time</string>
+    <string name="settings_log_reminder_time_label">Log reminder time</string>
+    <string name="settings_log_reminder_time_content_description">Change log reminder time</string>
+    <string name="settings_lesson_reminder_time_dialog_title">Choose lesson reminder time</string>
+    <string name="settings_log_reminder_time_dialog_title">Choose log reminder time</string>
+    <string name="settings_section_data">Data Management</string>
+    <string name="settings_backup_title">Export backup</string>
+    <string name="settings_backup_content_description">Export app data to CSV</string>
+    <string name="settings_backup_action_value">CSV</string>
+    <string name="settings_restore_title">Import backup</string>
+    <string name="settings_restore_content_description">Import app data from CSV</string>
+    <string name="settings_restore_action_value">CSV</string>
+    <string name="settings_reset_title">Reset all data</string>
+    <string name="settings_reset_content_description">Delete all stored data</string>
+    <string name="settings_reset_action_value">All data</string>
+    <string name="settings_reset_dialog_title">Reset all data?</string>
+    <string name="settings_reset_dialog_message">This will permanently delete all students, lessons, homework, preferences, and AI insights. This action cannot be undone.</string>
+    <string name="settings_reset_dialog_confirm">Reset</string>
+    <string name="settings_backup_success">Backup created successfully.</string>
+    <string name="settings_backup_failure">Unable to create backup. Please try again.</string>
+    <string name="settings_restore_success">Backup restored successfully.</string>
+    <string name="settings_restore_failure">Unable to restore backup. Please check the file and try again.</string>
+    <string name="settings_reset_success">All data cleared successfully.</string>
+    <string name="settings_reset_failure">Unable to reset data. Please try again.</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_student_name">Elif Yılmaz</string>

@@ -3,6 +3,7 @@ package com.barutdev.kora.data.local
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.barutdev.kora.data.local.entity.StudentEntity
@@ -34,4 +35,13 @@ interface StudentDao {
 
     @Query("UPDATE students SET fullName = :fullName, hourlyRate = :hourlyRate WHERE id = :studentId")
     suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
+
+    @Query("SELECT * FROM students")
+    suspend fun getStudentsSnapshot(): List<StudentEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(students: List<StudentEntity>)
+
+    @Query("DELETE FROM students")
+    suspend fun deleteAll()
 }

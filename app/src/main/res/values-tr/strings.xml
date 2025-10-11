@@ -18,6 +18,9 @@
     <string name="homework_ai_card_title">Yapay Zeka Ödev İçgörüleri</string>
     <string name="homework_ai_card_body">%1$s\'in ödev performansı yükselişte. İvmeyi korumak için daha zorlu sorulara odaklanın.</string>
     <string name="homework_assignments_section_title">Tüm Ödevler</string>
+    <!-- Ortak Öğrenci Görünümü -->
+    <string name="student_name_loading_placeholder">Yükleniyor...</string>
+    <string name="student_name_missing_placeholder">Öğrenci kullanılamıyor</string>
     <string name="homework_empty_state_message">Henüz ödev atanmadı.</string>
     <string name="homework_due_date_label">Son teslim: %1$s</string>
     <string name="homework_status_pending">Beklemede</string>
@@ -67,6 +70,31 @@
     <string name="settings_lesson_reminders_content_description">Ders hatırlatma bildirimlerini aç/kapat</string>
     <string name="settings_log_reminder_label">Ders Sonrası Not Hatırlatıcısı</string>
     <string name="settings_log_reminder_content_description">Ders sonrası not hatırlatmalarını aç/kapat</string>
+    <string name="settings_lesson_reminder_time_label">Ders hatırlatma saati</string>
+    <string name="settings_lesson_reminder_time_content_description">Ders hatırlatma saatini değiştir</string>
+    <string name="settings_log_reminder_time_label">Kayıt hatırlatma saati</string>
+    <string name="settings_log_reminder_time_content_description">Kayıt hatırlatma saatini değiştir</string>
+    <string name="settings_lesson_reminder_time_dialog_title">Ders hatırlatma saatini seçin</string>
+    <string name="settings_log_reminder_time_dialog_title">Kayıt hatırlatma saatini seçin</string>
+    <string name="settings_section_data">Veri Yönetimi</string>
+    <string name="settings_backup_title">Yedeği dışa aktar</string>
+    <string name="settings_backup_content_description">Uygulama verilerini CSV olarak dışa aktar</string>
+    <string name="settings_backup_action_value">CSV</string>
+    <string name="settings_restore_title">Yedeği içe aktar</string>
+    <string name="settings_restore_content_description">Uygulama verilerini CSV\'den içe aktar</string>
+    <string name="settings_restore_action_value">CSV</string>
+    <string name="settings_reset_title">Tüm verileri sıfırla</string>
+    <string name="settings_reset_content_description">Kaydedilen tüm verileri sil</string>
+    <string name="settings_reset_action_value">Tüm veriler</string>
+    <string name="settings_reset_dialog_title">Tüm veriler sıfırlansın mı?</string>
+    <string name="settings_reset_dialog_message">Bu işlem tüm öğrencileri, dersleri, ödevleri, tercihleri ve yapay zeka içgörülerini kalıcı olarak silecek. Bu işlem geri alınamaz.</string>
+    <string name="settings_reset_dialog_confirm">Sıfırla</string>
+    <string name="settings_backup_success">Yedekleme başarıyla oluşturuldu.</string>
+    <string name="settings_backup_failure">Yedekleme oluşturulamadı. Lütfen tekrar deneyin.</string>
+    <string name="settings_restore_success">Yedekleme başarıyla içe aktarıldı.</string>
+    <string name="settings_restore_failure">Yedekleme içe aktarılamadı. Lütfen dosyayı kontrol edip tekrar deneyin.</string>
+    <string name="settings_reset_success">Tüm veriler başarıyla temizlendi.</string>
+    <string name="settings_reset_failure">Veriler sıfırlanamadı. Lütfen tekrar deneyin.</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_student_name">Elif Yılmaz</string>
