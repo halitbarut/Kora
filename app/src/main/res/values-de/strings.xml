@@ -18,9 +18,6 @@
     <string name="homework_ai_card_title">KI-Hausaufgaben-Einblicke</string>
     <string name="homework_ai_card_body">Die Hausaufgabenleistung von %1$s zeigt einen Aufwärtstrend. Konzentriere dich auf anspruchsvollere Aufgaben, um das Momentum zu halten.</string>
     <string name="homework_assignments_section_title">Alle Aufgaben</string>
-    <!-- Gemeinsame Darstellung -->
-    <string name="student_name_loading_placeholder">Wird geladen...</string>
-    <string name="student_name_missing_placeholder">Schüler nicht verfügbar</string>
     <string name="homework_empty_state_message">Noch keine Hausaufgaben zugewiesen.</string>
     <string name="homework_due_date_label">Fällig: %1$s</string>
     <string name="homework_status_pending">Ausstehend</string>

@@ -1,5 +1,7 @@
 package com.barutdev.kora.navigation
 
+import android.os.SystemClock
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -14,11 +16,29 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -36,6 +56,12 @@ import com.barutdev.kora.ui.screens.homework.HomeworkScreen
 import com.barutdev.kora.ui.screens.settings.SettingsScreen
 import com.barutdev.kora.ui.screens.student_list.StudentListScreen
 import com.barutdev.kora.ui.navigation.BottomNavPreloadViewModel
+import com.barutdev.kora.ui.navigation.KoraScaffoldController
+import com.barutdev.kora.ui.navigation.LocalKoraScaffoldController
+import com.barutdev.kora.ui.navigation.TopBarConfig
+import com.barutdev.kora.ui.navigation.rememberKoraScaffoldController
+import com.barutdev.kora.util.koraStringResource
+import java.util.Locale
 import kotlin.jvm.JvmInline
 
 const val STUDENT_ID_ARG = "studentId"
@@ -86,13 +112,15 @@ internal val bottomNavRouteKeySet: Set<RouteKey> = bottomNavRouteKeys.toSet()
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun KoraNavGraph(
+    modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    modifier: Modifier = Modifier
+    scaffoldController: KoraScaffoldController = rememberKoraScaffoldController()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val preloadViewModel: BottomNavPreloadViewModel = hiltViewModel()
     val bottomNavTransitionState = remember { BottomNavTransitionState() }
+    val performanceLogger = remember { NavigationPerformanceLogger() }
 
     val currentStudentId = navBackStackEntry
         ?.arguments
@@ -112,173 +140,310 @@ fun KoraNavGraph(
                 bottomNavTransitionState.markPrimedAfterFirstFrames()
             }
         }
+        performanceLogger.onRouteChanged(currentRoute)
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = KoraDestination.StudentList.route,
-        modifier = modifier,
-        enterTransition = {
-            if (bottomNavTransitionState.shouldAnimate(
-                    initialState.destination.route,
-                    targetState.destination.route
-                )
-            ) {
-                koraEnterTransition()
-            } else {
-                fadeIn(
-                    animationSpec = tween(
-                        durationMillis = FADE_DURATION_MS,
-                        easing = LinearOutSlowInEasing
+    val bottomBarVisible = shouldShowBottomBar(currentRoute, currentStudentId != null)
+
+    CompositionLocalProvider(LocalKoraScaffoldController provides scaffoldController) {
+        Scaffold(
+            modifier = modifier,
+            topBar = { KoraTopBar(scaffoldController.topBarConfig.value) },
+            bottomBar = {
+                if (bottomBarVisible && currentStudentId != null) {
+                    KoraBottomNavigation(
+                        currentRoute = currentRoute,
+                        studentId = currentStudentId,
+                        onNavigate = { route -> navController.navigateKora(route) }
                     )
-                )
-            }
-        },
-        exitTransition = {
-            if (bottomNavTransitionState.shouldAnimate(
-                    initialState.destination.route,
-                    targetState.destination.route
-                )
-            ) {
-                koraExitTransition()
-            } else {
-                fadeOut(
-                    animationSpec = tween(
-                        durationMillis = FADE_DURATION_MS,
-                        easing = FastOutLinearInEasing
-                    )
-                )
-            }
-        },
-        popEnterTransition = {
-            if (bottomNavTransitionState.shouldAnimate(
-                    initialState.destination.route,
-                    targetState.destination.route
-                )
-            ) {
-                koraPopEnterTransition()
-            } else {
-                fadeIn(
-                    animationSpec = tween(
-                        durationMillis = FADE_DURATION_MS,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            }
-        },
-        popExitTransition = {
-            if (bottomNavTransitionState.shouldAnimate(
-                    initialState.destination.route,
-                    targetState.destination.route
-                )
-            ) {
-                koraPopExitTransition()
-            } else {
-                fadeOut(
-                    animationSpec = tween(
-                        durationMillis = FADE_DURATION_MS,
-                        easing = FastOutLinearInEasing
-                    )
-                )
-            }
-        }
-    ) {
-        composable(route = KoraDestination.StudentList.route) {
-            StudentListScreen(
-                onAddStudent = {},
-                onStudentClick = { studentId ->
-                    studentId.toIntOrNull()?.let { id ->
-                        navController.navigateKora(
-                            KoraDestination.Dashboard.createRoute(id)
+                }
+            },
+            floatingActionButton = {
+                val fabConfig = scaffoldController.fabConfig.value
+                if (fabConfig != null) {
+                    FloatingActionButton(
+                        onClick = fabConfig.onClick,
+                        containerColor = fabConfig.containerColor
+                            ?: MaterialTheme.colorScheme.primary,
+                        contentColor = fabConfig.contentColor
+                            ?: MaterialTheme.colorScheme.onPrimary
+                    ) {
+                        Icon(
+                            imageVector = fabConfig.icon,
+                            contentDescription = fabConfig.contentDescription
                         )
                     }
                 }
-            )
-        }
-        composable(
-            route = KoraDestination.Dashboard.route,
-            arguments = listOf(
-                navArgument(STUDENT_ID_ARG) {
-                    type = NavType.IntType
-                }
-            )
-        ) {
-            DashboardScreen(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigateKora(route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate("settings") {
-                        launchSingleTop = true
+            },
+            snackbarHost = { SnackbarHost(hostState = scaffoldController.snackbarHostState) }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = KoraDestination.StudentList.route,
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    if (bottomNavTransitionState.shouldAnimate(
+                            initialState.destination.route,
+                            targetState.destination.route
+                        )
+                    ) {
+                        koraEnterTransition()
+                    } else {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = FADE_DURATION_MS,
+                                easing = LinearOutSlowInEasing
+                            )
+                        )
                     }
                 },
-                onNavigateToStudentList = {
-                    navController.navigate(KoraDestination.StudentList.route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
+                exitTransition = {
+                    if (bottomNavTransitionState.shouldAnimate(
+                            initialState.destination.route,
+                            targetState.destination.route
+                        )
+                    ) {
+                        koraExitTransition()
+                    } else {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = FADE_DURATION_MS,
+                                easing = FastOutLinearInEasing
+                            )
+                        )
+                    }
+                },
+                popEnterTransition = {
+                    if (bottomNavTransitionState.shouldAnimate(
+                            initialState.destination.route,
+                            targetState.destination.route
+                        )
+                    ) {
+                        koraPopEnterTransition()
+                    } else {
+                        fadeIn(
+                            animationSpec = tween(
+                                durationMillis = FADE_DURATION_MS,
+                                easing = LinearOutSlowInEasing
+                            )
+                        )
+                    }
+                },
+                popExitTransition = {
+                    if (bottomNavTransitionState.shouldAnimate(
+                            initialState.destination.route,
+                            targetState.destination.route
+                        )
+                    ) {
+                        koraPopExitTransition()
+                    } else {
+                        fadeOut(
+                            animationSpec = tween(
+                                durationMillis = FADE_DURATION_MS,
+                                easing = FastOutLinearInEasing
+                            )
+                        )
+                    }
+                }
+            ) {
+                composable(route = KoraDestination.StudentList.route) {
+                    StudentListScreen(
+                        onAddStudent = {},
+                        onStudentClick = { studentId ->
+                            studentId.toIntOrNull()?.let { id ->
+                                navController.navigateKora(
+                                    KoraDestination.Dashboard.createRoute(id)
+                                )
+                            }
                         }
-                        launchSingleTop = true
-                    }
+                    )
                 }
-            )
-        }
-        composable(
-            route = KoraDestination.Calendar.route,
-            arguments = listOf(
-                navArgument(STUDENT_ID_ARG) {
-                    type = NavType.IntType
-                }
-            )
-        ) {
-            CalendarScreen(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigateKora(route)
-                },
-                onNavigateToStudentList = {
-                    navController.navigate(KoraDestination.StudentList.route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
+                composable(
+                    route = KoraDestination.Dashboard.route,
+                    arguments = listOf(
+                        navArgument(STUDENT_ID_ARG) {
+                            type = NavType.IntType
                         }
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
-        composable(
-            route = KoraDestination.Homework.route,
-            arguments = listOf(
-                navArgument(STUDENT_ID_ARG) {
-                    type = NavType.IntType
-                }
-            )
-        ) {
-            HomeworkScreen(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigateKora(route)
-                },
-                onNavigateToStudentList = {
-                    navController.navigate(KoraDestination.StudentList.route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
+                    )
+                ) {
+                    DashboardScreen(
+                        onNavigateToSettings = {
+                            navController.navigate(KoraDestination.Settings.route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToStudentList = {
+                            navController.navigate(KoraDestination.StudentList.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
                         }
-                        launchSingleTop = true
-                    }
+                    )
                 }
-            )
-        }
-        composable(route = KoraDestination.Settings.route) {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+                composable(
+                    route = KoraDestination.Calendar.route,
+                    arguments = listOf(
+                        navArgument(STUDENT_ID_ARG) {
+                            type = NavType.IntType
+                        }
+                    )
+                ) {
+                    CalendarScreen(
+                        onNavigateToStudentList = {
+                            navController.navigate(KoraDestination.StudentList.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
+                composable(
+                    route = KoraDestination.Homework.route,
+                    arguments = listOf(
+                        navArgument(STUDENT_ID_ARG) {
+                            type = NavType.IntType
+                        }
+                    )
+                ) {
+                    HomeworkScreen(
+                        onNavigateToStudentList = {
+                            navController.navigate(KoraDestination.StudentList.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
+                composable(route = KoraDestination.Settings.route) {
+                    SettingsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
         }
     }
 }
 
 private const val SLIDE_DURATION_MS = 240
 private const val FADE_DURATION_MS = 180
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun KoraTopBar(config: TopBarConfig?) {
+    if (config == null) return
+    TopAppBar(
+        title = { Text(text = config.title) },
+        navigationIcon = {
+            val navigation = config.navigationIcon
+            if (navigation != null) {
+                IconButton(onClick = navigation.onClick) {
+                    Icon(
+                        imageVector = navigation.icon,
+                        contentDescription = navigation.contentDescription
+                    )
+                }
+            }
+        },
+        actions = {
+            config.actions.forEach { action ->
+                IconButton(onClick = action.onClick) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.contentDescription
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun KoraBottomNavigation(
+    currentRoute: String?,
+    studentId: Int,
+    onNavigate: (String) -> Unit
+) {
+    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
+    val items = remember(studentId) {
+        listOf(
+            BottomNavItem(
+                route = KoraDestination.Dashboard.createRoute(studentId),
+                routeKey = KoraDestination.Dashboard.routeKey(),
+                icon = Icons.Outlined.Dashboard,
+                labelRes = R.string.dashboard_title
+            ),
+            BottomNavItem(
+                route = KoraDestination.Calendar.createRoute(studentId),
+                routeKey = KoraDestination.Calendar.routeKey(),
+                icon = Icons.Outlined.CalendarMonth,
+                labelRes = R.string.calendar_title
+            ),
+            BottomNavItem(
+                route = KoraDestination.Homework.createRoute(studentId),
+                routeKey = KoraDestination.Homework.routeKey(),
+                icon = Icons.Outlined.Assignment,
+                labelRes = R.string.homework_title
+            )
+        )
+    }
+
+    NavigationBar {
+        items.forEach { item ->
+            val isSelected = currentRouteKey == item.routeKey
+            val label = koraStringResource(id = item.labelRes)
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = {
+                    if (!isSelected) {
+                        onNavigate(item.route)
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = label
+                    )
+                },
+                label = { Text(text = label) }
+            )
+        }
+    }
+}
+
+@VisibleForTesting
+internal fun shouldShowBottomBar(route: String?, hasStudentId: Boolean): Boolean {
+    if (!hasStudentId) return false
+    val routeKey = route.toRouteKey()
+    return bottomNavRouteKeySet.contains(routeKey)
+}
+
+private class NavigationPerformanceLogger {
+    private var lastTimestampNanos: Long = SystemClock.elapsedRealtimeNanos()
+    private var lastRoute: String? = null
+
+    fun onRouteChanged(route: String?) {
+        if (route == lastRoute) return
+        val now = SystemClock.elapsedRealtimeNanos()
+        val deltaMs = (now - lastTimestampNanos) / 1_000_000.0
+        val formatted = String.format(Locale.US, "%.1f", deltaMs)
+        Log.d("KoraNavigation", "Route change to $route took $formatted ms")
+        lastRoute = route
+        lastTimestampNanos = now
+    }
+}
+
+private data class BottomNavItem(
+    val route: String,
+    val routeKey: RouteKey,
+    val icon: ImageVector,
+    @StringRes val labelRes: Int
+)
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraEnterTransition(): EnterTransition {
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)

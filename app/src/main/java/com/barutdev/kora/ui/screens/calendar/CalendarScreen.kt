@@ -1,6 +1,5 @@
 package com.barutdev.kora.ui.screens.calendar
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,32 +13,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,10 +43,11 @@ import androidx.compose.ui.unit.dp
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
-import com.barutdev.kora.navigation.KoraDestination
-import com.barutdev.kora.navigation.RouteKey
-import com.barutdev.kora.navigation.toRouteKey
-import com.barutdev.kora.navigation.routeKey
+import com.barutdev.kora.ui.navigation.FabConfig
+import com.barutdev.kora.ui.navigation.LocalKoraScaffoldController
+import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
+import com.barutdev.kora.ui.navigation.TopBarAction
+import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.screens.dashboard.components.LogLessonDialog
 import com.barutdev.kora.ui.screens.common.StudentNameUiStatus
 import com.barutdev.kora.ui.screens.common.deriveStudentNameUiStatus
@@ -85,28 +73,49 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 
 
-private data class CalendarNavItem(
-    val destination: KoraDestination,
-    val routeKey: RouteKey,
-    val icon: ImageVector,
-    @StringRes val labelRes: Int
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
     onNavigateToStudentList: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
+    val scaffoldController = LocalKoraScaffoldController.current
     val studentName by viewModel.studentName.collectAsStateWithLifecycle()
     val lessons by viewModel.lessons.collectAsStateWithLifecycle()
     val currentMonth by viewModel.currentMonth.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     val isLogLessonDialogVisible by viewModel.isLogLessonDialogVisible.collectAsStateWithLifecycle()
     val lessonToLog by viewModel.lessonToLog.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
+    val zoneId = remember { ZoneId.systemDefault() }
+    val snackbarHostState = scaffoldController.snackbarHostState
+
+    val studentNameStatus = deriveStudentNameUiStatus(
+        studentName = studentName,
+        hasStudentReference = viewModel.hasStudentReference
+    )
+    val calendarLabel = koraStringResource(id = R.string.calendar_title)
+    val resolvedStudentName = studentName.takeIf {
+        studentNameStatus == StudentNameUiStatus.Ready && it.isNotBlank()
+    } ?: calendarLabel
+    val topBarTitle = if (studentNameStatus == StudentNameUiStatus.Ready && studentName.isNotBlank()) {
+        koraStringResource(
+            id = R.string.calendar_top_bar_title,
+            resolvedStudentName,
+            calendarLabel
+        )
+    } else {
+        calendarLabel
+    }
+    val navigateToListDescription = koraStringResource(
+        id = R.string.top_bar_navigate_to_student_list_content_description
+    )
+    val addLessonDescription = koraStringResource(
+        id = R.string.calendar_add_lesson_fab_content_description
+    )
+    val scheduledMessage = koraStringResource(id = R.string.calendar_lesson_scheduled_message)
+    val containerColor = MaterialTheme.colorScheme.primary
+    val contentColor = MaterialTheme.colorScheme.onPrimary
 
     LogLessonDialog(
         showDialog = isLogLessonDialogVisible,
@@ -120,56 +129,79 @@ fun CalendarScreen(
         }
     )
 
+    val topBarConfig = remember(
+        topBarTitle,
+        navigateToListDescription,
+        onNavigateToStudentList
+    ) {
+        TopBarConfig(
+            title = topBarTitle,
+            navigationIcon = TopBarAction(
+                icon = Icons.Outlined.Groups,
+                contentDescription = navigateToListDescription,
+                onClick = onNavigateToStudentList
+            )
+        )
+    }
+    val fabConfig = remember(
+        selectedDate,
+        addLessonDescription,
+        containerColor,
+        contentColor,
+        scheduledMessage,
+        coroutineScope,
+        viewModel,
+        zoneId,
+        snackbarHostState
+    ) {
+        FabConfig(
+            icon = Icons.Filled.Add,
+            contentDescription = addLessonDescription,
+            onClick = {
+                val epochMillis = selectedDate
+                    .atStartOfDay(zoneId)
+                    .toInstant()
+                    .toEpochMilli()
+                coroutineScope.launch {
+                    viewModel.scheduleLesson(epochMillis)
+                    snackbarHostState.showSnackbar(message = scheduledMessage)
+                }
+            },
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    }
+    ScreenScaffoldConfig(
+        topBarConfig = topBarConfig,
+        fabConfig = fabConfig
+    )
+
     CalendarScreenContent(
-        currentRoute = currentRoute,
-        onNavigate = onNavigate,
-        onNavigateToStudentList = onNavigateToStudentList,
-        studentId = viewModel.studentId,
-        studentName = studentName,
+        modifier = modifier.fillMaxSize(),
         currentMonth = currentMonth,
         selectedDate = selectedDate,
         lessons = lessons,
         onPreviousMonth = viewModel::onPreviousMonth,
         onNextMonth = viewModel::onNextMonth,
         onSelectDate = viewModel::onSelectDate,
-        scheduleLesson = { epochMillis -> viewModel.scheduleLesson(epochMillis) },
-        onLogLessonClick = viewModel::onLogLessonClicked,
-        modifier = modifier
+        onLogLessonClick = viewModel::onLogLessonClicked
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarScreenContent(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
-    onNavigateToStudentList: () -> Unit,
-    studentId: Int,
-    studentName: String,
+    modifier: Modifier = Modifier,
     currentMonth: YearMonth,
     selectedDate: LocalDate,
     lessons: List<Lesson>,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onSelectDate: (LocalDate) -> Unit,
-    scheduleLesson: suspend (Long) -> Unit,
-    onLogLessonClick: (Lesson) -> Unit,
-    modifier: Modifier = Modifier
+    onLogLessonClick: (Lesson) -> Unit
 ) {
     val currentLocale = LocalLocale.current
     val zoneId = remember { ZoneId.systemDefault() }
     val today = remember { LocalDate.now(zoneId) }
-
-    val studentNameStatus = deriveStudentNameUiStatus(
-        studentName = studentName,
-        hasStudentReference = studentId >= 0
-    )
-    val displayedStudentName = when (studentNameStatus) {
-        StudentNameUiStatus.Loaded -> studentName
-        StudentNameUiStatus.Loading -> koraStringResource(id = R.string.student_name_loading_placeholder)
-        StudentNameUiStatus.Missing -> koraStringResource(id = R.string.student_name_missing_placeholder)
-    }
-    val calendarLabel = koraStringResource(id = R.string.calendar_title)
 
     val lessonsByDate = remember(lessons, zoneId) {
         lessons.groupBy { lesson ->
@@ -181,151 +213,33 @@ private fun CalendarScreenContent(
     val selectedDateLessons = remember(selectedDate, lessonsByDate) {
         lessonsByDate[selectedDate].orEmpty()
     }
-    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
 
-    val navigationItems = remember {
-        listOf(
-            CalendarNavItem(
-                destination = KoraDestination.Dashboard,
-                routeKey = KoraDestination.Dashboard.routeKey(),
-                icon = Icons.Outlined.Dashboard,
-                labelRes = R.string.dashboard_title
-            ),
-            CalendarNavItem(
-                destination = KoraDestination.Calendar,
-                routeKey = KoraDestination.Calendar.routeKey(),
-                icon = Icons.Outlined.CalendarMonth,
-                labelRes = R.string.calendar_title
-            ),
-            CalendarNavItem(
-                destination = KoraDestination.Homework,
-                routeKey = KoraDestination.Homework.routeKey(),
-                icon = Icons.Outlined.Assignment,
-                labelRes = R.string.homework_title
-            )
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        MonthlyCalendarView(
+            currentMonth = currentMonth,
+            selectedDate = selectedDate,
+            today = today,
+            onPreviousMonth = onPreviousMonth,
+            onNextMonth = onNextMonth,
+            onDaySelected = onSelectDate,
+            lessonsByDate = lessonsByDate,
+            locale = currentLocale
+        )
+        LessonDetailsSection(
+            selectedDate = selectedDate,
+            lessons = selectedDateLessons,
+            today = today,
+            locale = currentLocale,
+            onLessonActionClick = onLogLessonClick
         )
     }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    val scheduledMessage = koraStringResource(id = R.string.calendar_lesson_scheduled_message)
-
-    val hasStudentId = studentId >= 0
-
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = koraStringResource(
-                            id = R.string.calendar_top_bar_title,
-                            displayedStudentName,
-                            calendarLabel
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateToStudentList) {
-                        Icon(
-                            imageVector = Icons.Outlined.Groups,
-                            contentDescription = koraStringResource(
-                                id = R.string.top_bar_navigate_to_student_list_content_description
-                            )
-                        )
-                    }
-                }
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val epochMillis = selectedDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
-                    coroutineScope.launch {
-                        scheduleLesson(epochMillis)
-                        snackbarHostState.showSnackbar(message = scheduledMessage)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = koraStringResource(id = R.string.calendar_add_lesson_fab_content_description)
-                )
-            }
-        },
-        bottomBar = {
-            NavigationBar {
-                navigationItems.forEach { item ->
-                    val label = koraStringResource(id = item.labelRes)
-                    val isSelected = currentRouteKey == item.routeKey
-                    val enabled = when (item.destination) {
-                        KoraDestination.Dashboard,
-                        KoraDestination.Calendar,
-                        KoraDestination.Homework -> hasStudentId
-                        else -> true
-                    }
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            if (!enabled || isSelected) {
-                                return@NavigationBarItem
-                            }
-                            when (item.destination) {
-                                KoraDestination.Dashboard -> onNavigate(
-                                    KoraDestination.Dashboard.createRoute(studentId)
-                                )
-                                KoraDestination.Calendar -> onNavigate(
-                                    KoraDestination.Calendar.createRoute(studentId)
-                                )
-                                KoraDestination.Homework -> onNavigate(
-                                    KoraDestination.Homework.createRoute(studentId)
-                                )
-                                else -> onNavigate(item.destination.route)
-                            }
-                        },
-                        enabled = enabled,
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = label
-                            )
-                        },
-                        label = { Text(text = label) }
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            MonthlyCalendarView(
-                currentMonth = currentMonth,
-                selectedDate = selectedDate,
-                today = today,
-                onPreviousMonth = onPreviousMonth,
-                onNextMonth = onNextMonth,
-                onDaySelected = onSelectDate,
-                lessonsByDate = lessonsByDate,
-                locale = currentLocale
-            )
-            LessonDetailsSection(
-                selectedDate = selectedDate,
-                lessons = selectedDateLessons,
-                today = today,
-                locale = currentLocale,
-                onLessonActionClick = onLogLessonClick
-            )
-        }
-    }
 }
+
 
 @Composable
 private fun MonthlyCalendarView(
@@ -365,6 +279,9 @@ private fun MonthlyCalendarView(
             repeat(trailingDays) { add(null) }
         }
     }
+    val calendarRows = remember(calendarDays) {
+        calendarDays.chunked(daysInWeek)
+    }
 
     Column(modifier = modifier) {
         CalendarHeader(
@@ -375,29 +292,37 @@ private fun MonthlyCalendarView(
         Spacer(modifier = Modifier.height(16.dp))
         DaysOfWeekRow(daysOfWeek = daysOfWeek, locale = locale)
         Spacer(modifier = Modifier.height(12.dp))
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            userScrollEnabled = false,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(calendarDays.size) { index ->
-                val date = calendarDays[index]
-                if (date == null) {
-                    Spacer(modifier = Modifier.aspectRatio(1f))
-                } else {
-                    val lessonsForDate = lessonsByDate[date].orEmpty()
-                    CalendarDayCell(
-                        date = date,
-                        isSelected = selectedDate == date,
-                        indicatorColor = statusDotColorForLessons(
-                            lessons = lessonsForDate,
-                            date = date,
-                            today = today
-                        ),
-                        onClick = { onDaySelected(date) }
-                    )
+            calendarRows.forEach { week ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    week.forEach { date ->
+                        if (date == null) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                            )
+                        } else {
+                            val lessonsForDate = lessonsByDate[date].orEmpty()
+                            CalendarDayCell(
+                                date = date,
+                                isSelected = selectedDate == date,
+                                indicatorColor = statusDotColorForLessons(
+                                    lessons = lessonsForDate,
+                                    date = date,
+                                    today = today
+                                ),
+                                onClick = { onDaySelected(date) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -467,7 +392,8 @@ private fun CalendarDayCell(
     date: LocalDate,
     isSelected: Boolean,
     indicatorColor: Color?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val shape = MaterialTheme.shapes.medium
     val backgroundColor = if (isSelected) {
@@ -482,7 +408,7 @@ private fun CalendarDayCell(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .clip(shape)
             .background(backgroundColor)
@@ -765,18 +691,13 @@ private fun CalendarScreenPreview() {
     val currentMonth = YearMonth.from(selectedDate)
     KoraTheme {
         CalendarScreenContent(
-            currentRoute = KoraDestination.Calendar.route,
-            onNavigate = {},
-            onNavigateToStudentList = {},
-            studentId = 1,
-            studentName = "Elif Yılmaz",
+            modifier = Modifier.fillMaxWidth(),
             currentMonth = currentMonth,
             selectedDate = selectedDate,
             lessons = previewLessons,
             onPreviousMonth = {},
             onNextMonth = {},
             onSelectDate = {},
-            scheduleLesson = { _ -> },
             onLogLessonClick = {}
         )
     }

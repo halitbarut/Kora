@@ -34,13 +34,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,6 +65,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.UserPreferences
+import com.barutdev.kora.ui.navigation.LocalKoraScaffoldController
+import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
+import com.barutdev.kora.ui.navigation.TopBarAction
+import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.util.formatCurrency
@@ -92,6 +93,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val userPreferences by viewModel.userPreferences.collectAsStateWithLifecycle()
+    val scaffoldController = LocalKoraScaffoldController.current
+    val snackbarHostState = scaffoldController.snackbarHostState
     val isLanguageDialogVisible by viewModel.isLanguageDialogVisible.collectAsStateWithLifecycle()
     val isCurrencyDialogVisible by viewModel.isCurrencyDialogVisible.collectAsStateWithLifecycle()
     val isHourlyRateDialogVisible by viewModel.isHourlyRateDialogVisible.collectAsStateWithLifecycle()
@@ -122,7 +125,6 @@ fun SettingsScreen(
     }
     var showResetConfirmation by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val backupSuccessMessage = koraStringResource(id = R.string.settings_backup_success)
     val backupFailureMessage = koraStringResource(id = R.string.settings_backup_failure)
@@ -131,6 +133,26 @@ fun SettingsScreen(
     val resetSuccessMessage = koraStringResource(id = R.string.settings_reset_success)
     val resetFailureMessage = koraStringResource(id = R.string.settings_reset_failure)
     val backupFileNameFormatter = remember { DateTimeFormatter.ofPattern("yyyyMMdd_HHmm") }
+
+    val topBarTitle = koraStringResource(id = R.string.settings_title)
+    val backContentDescription = koraStringResource(id = R.string.settings_back_content_description)
+    val topBarConfig = remember(
+        topBarTitle,
+        backContentDescription,
+        onNavigateBack
+    ) {
+        TopBarConfig(
+            title = topBarTitle,
+            navigationIcon = onNavigateBack?.let {
+                TopBarAction(
+                    icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = backContentDescription,
+                    onClick = it
+                )
+            }
+        )
+    }
+    ScreenScaffoldConfig(topBarConfig = topBarConfig)
 
     val backupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -256,151 +278,128 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = koraStringResource(id = R.string.settings_title))
-                },
-                navigationIcon = {
-                    if (onNavigateBack != null) {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                                contentDescription = koraStringResource(id = R.string.settings_back_content_description)
-                            )
-                        }
-                    }
-                }
-            )
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            SettingsSection(
+                title = koraStringResource(id = R.string.settings_section_general)
+            ) {
+                SettingSwitchRow(
+                    icon = Icons.Outlined.DarkMode,
+                    iconContentDescription = koraStringResource(id = R.string.settings_dark_mode_content_description),
+                    title = koraStringResource(id = R.string.settings_dark_mode_label),
+                    checked = userPreferences.isDarkMode,
+                    onCheckedChange = viewModel::updateDarkMode
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.Language,
+                    iconContentDescription = koraStringResource(id = R.string.settings_language_content_description),
+                    title = koraStringResource(id = R.string.settings_language_label),
+                    value = koraStringResource(id = languageLabelRes(userPreferences.languageCode)),
+                    onClick = viewModel::showLanguageDialog
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.Sell,
+                    iconContentDescription = koraStringResource(id = R.string.settings_currency_content_description),
+                    title = koraStringResource(id = R.string.settings_currency_label),
+                    value = koraStringResource(id = currencyLabelRes(userPreferences.currencyCode)),
+                    onClick = viewModel::showCurrencyDialog
+                )
+            }
         }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                SettingsSection(
-                    title = koraStringResource(id = R.string.settings_section_general)
-                ) {
-                    SettingSwitchRow(
-                        icon = Icons.Outlined.DarkMode,
-                        iconContentDescription = koraStringResource(id = R.string.settings_dark_mode_content_description),
-                        title = koraStringResource(id = R.string.settings_dark_mode_label),
-                        checked = userPreferences.isDarkMode,
-                        onCheckedChange = viewModel::updateDarkMode
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.Language,
-                        iconContentDescription = koraStringResource(id = R.string.settings_language_content_description),
-                        title = koraStringResource(id = R.string.settings_language_label),
-                        value = koraStringResource(id = languageLabelRes(userPreferences.languageCode)),
-                        onClick = viewModel::showLanguageDialog
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.Sell,
-                        iconContentDescription = koraStringResource(id = R.string.settings_currency_content_description),
-                        title = koraStringResource(id = R.string.settings_currency_label),
-                        value = koraStringResource(id = currencyLabelRes(userPreferences.currencyCode)),
-                        onClick = viewModel::showCurrencyDialog
-                    )
-                }
+        item {
+            SettingsSection(
+                title = koraStringResource(id = R.string.settings_section_notifications)
+            ) {
+                SettingSwitchRow(
+                    icon = Icons.Outlined.Notifications,
+                    iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminders_content_description),
+                    title = koraStringResource(id = R.string.settings_lesson_reminders_label),
+                    checked = userPreferences.lessonRemindersEnabled,
+                    onCheckedChange = viewModel::updateLessonRemindersEnabled
+                )
+                SettingsDivider()
+                SettingSwitchRow(
+                    icon = Icons.Outlined.EventNote,
+                    iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_content_description),
+                    title = koraStringResource(id = R.string.settings_log_reminder_label),
+                    checked = userPreferences.logReminderEnabled,
+                    onCheckedChange = viewModel::updateLogReminderEnabled
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.Schedule,
+                    iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminder_time_content_description),
+                    title = koraStringResource(id = R.string.settings_lesson_reminder_time_label),
+                    value = lessonReminderTimeText,
+                    onClick = { showLessonReminderTimeDialog = true }
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.AccessTime,
+                    iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_time_content_description),
+                    title = koraStringResource(id = R.string.settings_log_reminder_time_label),
+                    value = logReminderTimeText,
+                    onClick = { showLogReminderTimeDialog = true }
+                )
             }
-            item {
-                SettingsSection(
-                    title = koraStringResource(id = R.string.settings_section_notifications)
-                ) {
-                    SettingSwitchRow(
-                        icon = Icons.Outlined.Notifications,
-                        iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminders_content_description),
-                        title = koraStringResource(id = R.string.settings_lesson_reminders_label),
-                        checked = userPreferences.lessonRemindersEnabled,
-                        onCheckedChange = viewModel::updateLessonRemindersEnabled
-                    )
-                    SettingsDivider()
-                    SettingSwitchRow(
-                        icon = Icons.Outlined.EventNote,
-                        iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_content_description),
-                        title = koraStringResource(id = R.string.settings_log_reminder_label),
-                        checked = userPreferences.logReminderEnabled,
-                        onCheckedChange = viewModel::updateLogReminderEnabled
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.Schedule,
-                        iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminder_time_content_description),
-                        title = koraStringResource(id = R.string.settings_lesson_reminder_time_label),
-                        value = lessonReminderTimeText,
-                        onClick = { showLessonReminderTimeDialog = true }
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.AccessTime,
-                        iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_time_content_description),
-                        title = koraStringResource(id = R.string.settings_log_reminder_time_label),
-                        value = logReminderTimeText,
-                        onClick = { showLogReminderTimeDialog = true }
-                    )
-                }
+        }
+        item {
+            SettingsSection(
+                title = koraStringResource(id = R.string.settings_section_tutoring)
+            ) {
+                SettingNavigationRow(
+                    icon = Icons.Outlined.Payments,
+                    iconContentDescription = koraStringResource(id = R.string.settings_default_hourly_rate_content_description),
+                    title = koraStringResource(id = R.string.settings_default_hourly_rate_label),
+                    value = formatHourlyRate(
+                        amount = userPreferences.defaultHourlyRate,
+                        currencyCode = userPreferences.currencyCode
+                    ),
+                    onClick = viewModel::showHourlyRateDialog
+                )
             }
-            item {
-                SettingsSection(
-                    title = koraStringResource(id = R.string.settings_section_tutoring)
-                ) {
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.Payments,
-                        iconContentDescription = koraStringResource(id = R.string.settings_default_hourly_rate_content_description),
-                        title = koraStringResource(id = R.string.settings_default_hourly_rate_label),
-                        value = formatHourlyRate(
-                            amount = userPreferences.defaultHourlyRate,
-                            currencyCode = userPreferences.currencyCode
-                        ),
-                        onClick = viewModel::showHourlyRateDialog
-                    )
-                }
-            }
-            item {
-                SettingsSection(
-                    title = koraStringResource(id = R.string.settings_section_data)
-                ) {
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.FileDownload,
-                        iconContentDescription = koraStringResource(id = R.string.settings_backup_content_description),
-                        title = koraStringResource(id = R.string.settings_backup_title),
-                        value = koraStringResource(id = R.string.settings_backup_action_value),
-                        onClick = {
-                            val fileName = "kora_backup_${LocalDateTime.now().format(backupFileNameFormatter)}.csv"
-                            backupLauncher.launch(fileName)
-                        }
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.FileUpload,
-                        iconContentDescription = koraStringResource(id = R.string.settings_restore_content_description),
-                        title = koraStringResource(id = R.string.settings_restore_title),
-                        value = koraStringResource(id = R.string.settings_restore_action_value),
-                        onClick = {
-                            restoreLauncher.launch(arrayOf("text/*", "application/*"))
-                        }
-                    )
-                    SettingsDivider()
-                    SettingNavigationRow(
-                        icon = Icons.Outlined.DeleteForever,
-                        iconContentDescription = koraStringResource(id = R.string.settings_reset_content_description),
-                        title = koraStringResource(id = R.string.settings_reset_title),
-                        value = koraStringResource(id = R.string.settings_reset_action_value),
-                        onClick = {
-                            showResetConfirmation = true
-                        }
-                    )
-                }
+        }
+        item {
+            SettingsSection(
+                title = koraStringResource(id = R.string.settings_section_data)
+            ) {
+                SettingNavigationRow(
+                    icon = Icons.Outlined.FileDownload,
+                    iconContentDescription = koraStringResource(id = R.string.settings_backup_content_description),
+                    title = koraStringResource(id = R.string.settings_backup_title),
+                    value = koraStringResource(id = R.string.settings_backup_action_value),
+                    onClick = {
+                        val fileName = "kora_backup_${LocalDateTime.now().format(backupFileNameFormatter)}.csv"
+                        backupLauncher.launch(fileName)
+                    }
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.FileUpload,
+                    iconContentDescription = koraStringResource(id = R.string.settings_restore_content_description),
+                    title = koraStringResource(id = R.string.settings_restore_title),
+                    value = koraStringResource(id = R.string.settings_restore_action_value),
+                    onClick = {
+                        restoreLauncher.launch(arrayOf("text/*", "application/*"))
+                    }
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.Outlined.DeleteForever,
+                    iconContentDescription = koraStringResource(id = R.string.settings_reset_content_description),
+                    title = koraStringResource(id = R.string.settings_reset_title),
+                    value = koraStringResource(id = R.string.settings_reset_action_value),
+                    onClick = {
+                        showResetConfirmation = true
+                    }
+                )
             }
         }
     }

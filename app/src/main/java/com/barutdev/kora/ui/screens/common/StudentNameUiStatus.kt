@@ -3,9 +3,9 @@ package com.barutdev.kora.ui.screens.common
 import androidx.annotation.VisibleForTesting
 
 enum class StudentNameUiStatus {
-    Loaded,
-    Loading,
-    Missing
+    Ready,
+    Pending,
+    Unavailable
 }
 
 @VisibleForTesting
@@ -15,11 +15,11 @@ internal fun deriveStudentNameUiStatus(
 ): StudentNameUiStatus {
     return if (studentName.isBlank()) {
         if (hasStudentReference) {
-            StudentNameUiStatus.Loading
+            StudentNameUiStatus.Pending
         } else {
-            StudentNameUiStatus.Missing
+            StudentNameUiStatus.Unavailable
         }
     } else {
-        StudentNameUiStatus.Loaded
+        StudentNameUiStatus.Ready
     }
 }

@@ -1,6 +1,5 @@
 package com.barutdev.kora.ui.screens.dashboard
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
@@ -17,26 +16,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,11 +43,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
-import com.barutdev.kora.navigation.KoraDestination
-import com.barutdev.kora.navigation.RouteKey
-import com.barutdev.kora.navigation.routeKey
-import com.barutdev.kora.navigation.toRouteKey
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
+import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
+import com.barutdev.kora.ui.navigation.TopBarAction
+import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.screens.common.StudentNameUiStatus
 import com.barutdev.kora.ui.screens.common.deriveStudentNameUiStatus
 import com.barutdev.kora.ui.screens.dashboard.components.AddLessonDialog
@@ -77,13 +65,6 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import kotlinx.coroutines.launch
 
-private data class DashboardNavItem(
-    val destination: KoraDestination,
-    val routeKey: RouteKey,
-    val icon: ImageVector,
-    @StringRes val labelRes: Int
-)
-
 private data class CompletedLessonUiModel(
     val dateText: String,
     val durationText: String?,
@@ -92,8 +73,6 @@ private data class CompletedLessonUiModel(
 
 @Composable
 fun DashboardScreen(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToStudentList: () -> Unit,
     modifier: Modifier = Modifier,
@@ -110,6 +89,47 @@ fun DashboardScreen(
             viewModel.ensureAiInsights(locale)
         }
     }
+
+    val studentNameStatus = deriveStudentNameUiStatus(
+        studentName = uiState.studentName,
+        hasStudentReference = uiState.studentId != null
+    )
+    val fallbackTitle = koraStringResource(id = R.string.dashboard_title)
+    val resolvedStudentName = uiState.studentName.takeIf {
+        studentNameStatus == StudentNameUiStatus.Ready && it.isNotBlank()
+    }
+    val topBarTitle = resolvedStudentName?.let {
+        koraStringResource(id = R.string.dashboard_student_label, it)
+    } ?: fallbackTitle
+    val navigateToListDescription = koraStringResource(
+        id = R.string.top_bar_navigate_to_student_list_content_description
+    )
+    val settingsDescription = koraStringResource(id = R.string.dashboard_settings_icon_description)
+
+    val topBarConfig = remember(
+        topBarTitle,
+        navigateToListDescription,
+        settingsDescription,
+        onNavigateToStudentList,
+        onNavigateToSettings
+    ) {
+        TopBarConfig(
+            title = topBarTitle,
+            navigationIcon = TopBarAction(
+                icon = Icons.Outlined.Groups,
+                contentDescription = navigateToListDescription,
+                onClick = onNavigateToStudentList
+            ),
+            actions = listOf(
+                TopBarAction(
+                    icon = Icons.Filled.Settings,
+                    contentDescription = settingsDescription,
+                    onClick = onNavigateToSettings
+                )
+            )
+        )
+    }
+    ScreenScaffoldConfig(topBarConfig = topBarConfig)
 
     AddLessonDialog(
         showDialog = uiState.isAddLessonDialogVisible,
@@ -131,12 +151,14 @@ fun DashboardScreen(
         }
     )
 
-    DashboardScreenContent(
-        currentRoute = currentRoute,
-        uiState = uiState,
-        onNavigate = onNavigate,
-        onNavigateToSettings = onNavigateToSettings,
-        onNavigateToStudentList = onNavigateToStudentList,
+    DashboardBody(
+        totalHours = uiState.totalHours,
+        hourlyRate = uiState.hourlyRate,
+        totalAmountDue = uiState.totalAmountDue,
+        completedLessonsAwaitingPayment = uiState.completedLessonsAwaitingPayment,
+        lastPaymentDate = uiState.lastPaymentDate,
+        upcomingLessons = uiState.upcomingLessons,
+        pastLessonsToLog = uiState.pastLessonsToLog,
         onLogLessonClick = viewModel::onLogLessonClicked,
         onMarkCurrentCycleAsPaid = {
             coroutineScope.launch {
@@ -146,162 +168,7 @@ fun DashboardScreen(
         currencyCode = userPreferences.currencyCode,
         aiInsightsState = aiInsightsState,
         onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun DashboardScreenContent(
-    currentRoute: String?,
-    uiState: DashboardUiState,
-    onNavigate: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToStudentList: () -> Unit,
-    onLogLessonClick: (Lesson) -> Unit,
-    onMarkCurrentCycleAsPaid: () -> Unit,
-    currencyCode: String,
-    aiInsightsState: AiInsightsUiState,
-    onGenerateAiInsights: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val navigationItems = remember {
-        listOf(
-            DashboardNavItem(
-                destination = KoraDestination.Dashboard,
-                routeKey = KoraDestination.Dashboard.routeKey(),
-                icon = Icons.Outlined.Dashboard,
-                labelRes = R.string.dashboard_title
-            ),
-            DashboardNavItem(
-                destination = KoraDestination.Calendar,
-                routeKey = KoraDestination.Calendar.routeKey(),
-                icon = Icons.Outlined.CalendarMonth,
-                labelRes = R.string.calendar_title
-            ),
-            DashboardNavItem(
-                destination = KoraDestination.Homework,
-                routeKey = KoraDestination.Homework.routeKey(),
-                icon = Icons.Outlined.Assignment,
-                labelRes = R.string.homework_title
-            )
-        )
-    }
-    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
-    val studentNameStatus = deriveStudentNameUiStatus(
-        studentName = uiState.studentName,
-        hasStudentReference = uiState.studentId != null
-    )
-    val studentName = when (studentNameStatus) {
-        StudentNameUiStatus.Loaded -> uiState.studentName
-        StudentNameUiStatus.Loading -> koraStringResource(id = R.string.student_name_loading_placeholder)
-        StudentNameUiStatus.Missing -> koraStringResource(id = R.string.student_name_missing_placeholder)
-    }
-    val studentId = uiState.studentId
-
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            DashboardTopBar(
-                studentName = studentName,
-                onNavigateToSettings = onNavigateToSettings,
-                onNavigateToStudentList = onNavigateToStudentList
-            )
-        },
-        bottomBar = {
-            NavigationBar {
-                navigationItems.forEach { item ->
-                    val label = koraStringResource(id = item.labelRes)
-                    val isSelected = currentRouteKey == item.routeKey
-                    val isEnabled = when (item.destination) {
-                        KoraDestination.Dashboard,
-                        KoraDestination.Calendar,
-                        KoraDestination.Homework -> studentId != null
-                        else -> true
-                    }
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            if (!isEnabled || isSelected) {
-                                return@NavigationBarItem
-                            }
-                            when (item.destination) {
-                                KoraDestination.Dashboard -> studentId?.let { id ->
-                                    onNavigate(KoraDestination.Dashboard.createRoute(id))
-                                }
-                                KoraDestination.Calendar -> studentId?.let { id ->
-                                    onNavigate(KoraDestination.Calendar.createRoute(id))
-                                }
-                                KoraDestination.Homework -> studentId?.let { id ->
-                                    onNavigate(KoraDestination.Homework.createRoute(id))
-                                }
-                                else -> onNavigate(item.destination.route)
-                            }
-                        },
-                        enabled = isEnabled,
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = label
-                            )
-                        },
-                        label = { Text(text = label) }
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        DashboardBody(
-            totalHours = uiState.totalHours,
-            hourlyRate = uiState.hourlyRate,
-            totalAmountDue = uiState.totalAmountDue,
-            completedLessonsAwaitingPayment = uiState.completedLessonsAwaitingPayment,
-            lastPaymentDate = uiState.lastPaymentDate,
-            upcomingLessons = uiState.upcomingLessons,
-            pastLessonsToLog = uiState.pastLessonsToLog,
-            onLogLessonClick = onLogLessonClick,
-            onMarkCurrentCycleAsPaid = onMarkCurrentCycleAsPaid,
-            currencyCode = currencyCode,
-            aiInsightsState = aiInsightsState,
-            onGenerateAiInsights = onGenerateAiInsights,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DashboardTopBar(
-    studentName: String,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToStudentList: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = koraStringResource(id = R.string.dashboard_student_label, studentName),
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onNavigateToStudentList) {
-                Icon(
-                    imageVector = Icons.Outlined.Groups,
-                    contentDescription = koraStringResource(
-                        id = R.string.top_bar_navigate_to_student_list_content_description
-                    )
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onNavigateToSettings) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = koraStringResource(id = R.string.dashboard_settings_icon_description)
-                )
-            }
-        }
+        modifier = modifier.fillMaxSize()
     )
 }
 
@@ -836,12 +703,14 @@ private fun DashboardScreenPreview() {
         insight = "Elif's performance in Algebra has improved while Geometry homework needs reinforcement. Plan targeted triangle exercises next."
     )
     KoraTheme {
-        DashboardScreenContent(
-            currentRoute = KoraDestination.Dashboard.route,
-            uiState = previewUiState,
-            onNavigate = {},
-            onNavigateToSettings = {},
-            onNavigateToStudentList = {},
+        DashboardBody(
+            totalHours = previewUiState.totalHours,
+            hourlyRate = previewUiState.hourlyRate,
+            totalAmountDue = previewUiState.totalAmountDue,
+            completedLessonsAwaitingPayment = previewUiState.completedLessonsAwaitingPayment,
+            lastPaymentDate = previewUiState.lastPaymentDate,
+            upcomingLessons = previewUiState.upcomingLessons,
+            pastLessonsToLog = previewUiState.pastLessonsToLog,
             onLogLessonClick = {},
             onMarkCurrentCycleAsPaid = {},
             currencyCode = "TRY",

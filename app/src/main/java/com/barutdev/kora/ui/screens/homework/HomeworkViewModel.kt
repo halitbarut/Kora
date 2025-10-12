@@ -48,16 +48,17 @@ class HomeworkViewModel @Inject constructor(
     private val generateAiInsightsUseCase: GenerateAiInsightsUseCase
 ) : ViewModel() {
 
-    val studentId: Int = checkNotNull(
-        savedStateHandle[STUDENT_ID_ARG]
-    )
+    val studentId: Int? = savedStateHandle[STUDENT_ID_ARG]
+    val hasStudentReference: Boolean = studentId != null
 
-    private val student: StateFlow<Student?> = studentRepository.getStudentById(studentId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
-        )
+    private val student: StateFlow<Student?> = studentId?.let { id ->
+        studentRepository.getStudentById(id)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = null
+            )
+    } ?: MutableStateFlow(null)
 
     val studentName: StateFlow<String> = student
         .map { studentSnapshot -> studentSnapshot?.fullName ?: "" }
@@ -67,12 +68,14 @@ class HomeworkViewModel @Inject constructor(
             initialValue = ""
         )
 
-    val homework: StateFlow<List<Homework>> = homeworkRepository.getHomeworkForStudent(studentId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    val homework: StateFlow<List<Homework>> = studentId?.let { id ->
+        homeworkRepository.getHomeworkForStudent(id)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+    } ?: MutableStateFlow(emptyList())
 
     private val dialogVisibility = MutableStateFlow(false)
     val isDialogVisible: StateFlow<Boolean> = dialogVisibility.asStateFlow()
@@ -94,68 +97,76 @@ class HomeworkViewModel @Inject constructor(
     private var isCacheFetchInProgress: Boolean = false
 
     init {
+        if (hasStudentReference) {
+            observeAiInsights()
+        }
+    }
+
+    private fun observeAiInsights() {
         viewModelScope.launch {
             combine(student, homework) { studentSnapshot, homeworkSnapshot ->
                 studentSnapshot to homeworkSnapshot
             }
                 .flowOn(Dispatchers.Default)
                 .collect { (studentSnapshot, homeworkSnapshot) ->
-                latestStudentSnapshot = studentSnapshot
-                latestHomeworkSnapshot = homeworkSnapshot
-                val locale = lastRequestedLocale ?: return@collect
-                val localeTag = locale.toLanguageTag()
-                val signature = AiInsightsSignatureBuilder.build(
-                    focus = AiInsightsFocus.HOMEWORK,
-                    student = studentSnapshot,
-                    lessons = emptyList(),
-                    homework = homeworkSnapshot,
-                    locale = locale
-                )
-                latestComputedSignature = signature
-                val cached = cachedAiInsight
-                val requestKey = AiInsightsRequestKey(
-                    studentId = studentId,
-                    focus = AiInsightsFocus.HOMEWORK,
-                    localeTag = localeTag
-                )
-                val runningSignature = aiInsightsGenerationTracker.getRunningSignature(requestKey)
-                val isPendingForSignature =
-                    runningSignature == signature || activeRequestSignature == signature
-                if (isCacheFetchInProgress && cached == null) {
-                    return@collect
-                }
-                if (cached != null && cached.signature == signature) {
-                    if (isPendingForSignature) {
-                        if (_aiInsightsState.value.status != AiStatus.Loading) {
-                            _aiInsightsState.value = AiInsightsUiState(status = AiStatus.Loading)
+                    latestStudentSnapshot = studentSnapshot
+                    latestHomeworkSnapshot = homeworkSnapshot
+                    val locale = lastRequestedLocale ?: return@collect
+                    val localeTag = locale.toLanguageTag()
+                    val signature = AiInsightsSignatureBuilder.build(
+                        focus = AiInsightsFocus.HOMEWORK,
+                        student = studentSnapshot,
+                        lessons = emptyList(),
+                        homework = homeworkSnapshot,
+                        locale = locale
+                    )
+                    latestComputedSignature = signature
+                    val cached = cachedAiInsight
+                    val id = studentId ?: return@collect
+                    val requestKey = AiInsightsRequestKey(
+                        studentId = id,
+                        focus = AiInsightsFocus.HOMEWORK,
+                        localeTag = localeTag
+                    )
+                    val runningSignature = aiInsightsGenerationTracker.getRunningSignature(requestKey)
+                    val isPendingForSignature =
+                        runningSignature == signature || activeRequestSignature == signature
+                    if (isCacheFetchInProgress && cached == null) {
+                        return@collect
+                    }
+                    if (cached != null && cached.signature == signature) {
+                        if (isPendingForSignature) {
+                            if (_aiInsightsState.value.status != AiStatus.Loading) {
+                                _aiInsightsState.value = AiInsightsUiState(status = AiStatus.Loading)
+                            }
+                        } else if (
+                            _aiInsightsState.value.status != AiStatus.Success ||
+                            _aiInsightsState.value.insight != cached.insight
+                        ) {
+                            if (activeRequestSignature == signature) {
+                                activeRequestSignature = null
+                            }
+                            _aiInsightsState.value = AiInsightsUiState(
+                                status = AiStatus.Success,
+                                insight = cached.insight
+                            )
                         }
-                    } else if (
-                        _aiInsightsState.value.status != AiStatus.Success ||
-                        _aiInsightsState.value.insight != cached.insight
-                    ) {
-                        if (activeRequestSignature == signature) {
-                            activeRequestSignature = null
+                        if (!isPendingForSignature) {
+                            lastAiInputSignature = signature
                         }
-                        _aiInsightsState.value = AiInsightsUiState(
-                            status = AiStatus.Success,
-                            insight = cached.insight
+                    } else {
+                        triggerAiInsightsGeneration(
+                            locale = locale,
+                            signature = signature,
+                            force = false
                         )
                     }
-                    if (!isPendingForSignature) {
-                        lastAiInputSignature = signature
-                    }
-                } else {
-                    triggerAiInsightsGeneration(
-                        locale = locale,
-                        signature = signature,
-                        force = false
-                    )
                 }
-            }
         }
     }
 
     fun ensureAiInsights(locale: Locale) {
+        val id = studentId ?: return
         lastRequestedLocale = locale
         val signature = computeSignature(locale)
         latestComputedSignature = signature
@@ -164,12 +175,12 @@ class HomeworkViewModel @Inject constructor(
             try {
                 val localeTag = locale.toLanguageTag()
                 val requestKey = AiInsightsRequestKey(
-                    studentId = studentId,
+                    studentId = id,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag
                 )
                 val cached = aiInsightsCacheRepository.getInsight(
-                    studentId = studentId,
+                    studentId = id,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag
                 )
@@ -208,6 +219,9 @@ class HomeworkViewModel @Inject constructor(
     }
 
     fun retryAiInsights(locale: Locale) {
+        if (studentId == null) {
+            return
+        }
         lastRequestedLocale = locale
         val signature = computeSignature(locale)
         latestComputedSignature = signature
@@ -239,9 +253,10 @@ class HomeworkViewModel @Inject constructor(
         signature: String,
         force: Boolean
     ) {
+        val id = studentId ?: return
         val localeTag = locale.toLanguageTag()
         val requestKey = AiInsightsRequestKey(
-            studentId = studentId,
+            studentId = id,
             focus = AiInsightsFocus.HOMEWORK,
             localeTag = localeTag
         )
@@ -267,7 +282,7 @@ class HomeworkViewModel @Inject constructor(
         aiInsightsJob = viewModelScope.launch {
             try {
                 val cached = cachedAiInsight ?: aiInsightsCacheRepository.getInsight(
-                    studentId = studentId,
+                    studentId = id,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag
                 ).also { cachedAiInsight = it }
@@ -283,7 +298,7 @@ class HomeworkViewModel @Inject constructor(
                     return@launch
                 }
                 val computation = generateAiInsightsUseCase(
-                    studentId = studentId,
+                    studentId = id,
                     locale = locale,
                     focus = AiInsightsFocus.HOMEWORK
                 )
@@ -304,10 +319,11 @@ class HomeworkViewModel @Inject constructor(
         computation: AiInsightsComputation,
         localeTag: String
     ) {
+        val id = studentId ?: return
         when (val result = computation.result) {
             is AiInsightsResult.Success -> {
                 val cached = CachedAiInsight(
-                    studentId = studentId,
+                    studentId = id,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag,
                     insight = result.insight,
@@ -327,7 +343,7 @@ class HomeworkViewModel @Inject constructor(
             }
             AiInsightsResult.NotEnoughData -> {
                 aiInsightsCacheRepository.clearInsight(
-                    studentId = studentId,
+                    studentId = id,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag
                 )
@@ -363,7 +379,7 @@ class HomeworkViewModel @Inject constructor(
                     .filter { it != signature }
                     .first()
                 val cached = aiInsightsCacheRepository.getInsight(
-                    studentId = studentId,
+                    studentId = requestKey.studentId,
                     focus = AiInsightsFocus.HOMEWORK,
                     localeTag = localeTag
                 )
@@ -476,9 +492,10 @@ class HomeworkViewModel @Inject constructor(
         status: HomeworkStatus,
         performanceNotes: String?
     ) {
+        val targetStudentId = studentId ?: return
         val homework = Homework(
             id = 0,
-            studentId = studentId,
+            studentId = targetStudentId,
             title = title.trim(),
             description = description.trim(),
             creationDate = System.currentTimeMillis(),

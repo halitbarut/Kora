@@ -6,32 +6,32 @@ import org.junit.Test
 class StudentNameUiStatusTest {
 
     @Test
-    fun deriveStudentNameUiStatus_returnsLoaded_whenNamePresent() {
+    fun deriveStudentNameUiStatus_returnsReady_whenNamePresent() {
         val status = deriveStudentNameUiStatus(
             studentName = "Elif",
             hasStudentReference = true
         )
 
-        assertEquals(StudentNameUiStatus.Loaded, status)
+        assertEquals(StudentNameUiStatus.Ready, status)
     }
 
     @Test
-    fun deriveStudentNameUiStatus_returnsLoading_whenNameMissingButReferencePresent() {
+    fun deriveStudentNameUiStatus_returnsPending_whenNameMissingButReferencePresent() {
         val status = deriveStudentNameUiStatus(
             studentName = "",
             hasStudentReference = true
         )
 
-        assertEquals(StudentNameUiStatus.Loading, status)
+        assertEquals(StudentNameUiStatus.Pending, status)
     }
 
     @Test
-    fun deriveStudentNameUiStatus_returnsMissing_whenNameMissingAndNoReference() {
+    fun deriveStudentNameUiStatus_returnsUnavailable_whenNameMissingAndNoReference() {
         val status = deriveStudentNameUiStatus(
             studentName = "   ",
             hasStudentReference = false
         )
 
-        assertEquals(StudentNameUiStatus.Missing, status)
+        assertEquals(StudentNameUiStatus.Unavailable, status)
     }
 }
