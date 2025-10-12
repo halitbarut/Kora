@@ -18,9 +18,6 @@
     <string name="homework_ai_card_title">Yapay Zeka Ödev İçgörüleri</string>
     <string name="homework_ai_card_body">%1$s\'in ödev performansı yükselişte. İvmeyi korumak için daha zorlu sorulara odaklanın.</string>
     <string name="homework_assignments_section_title">Tüm Ödevler</string>
-    <!-- Ortak Öğrenci Görünümü -->
-    <string name="student_name_loading_placeholder">Yükleniyor...</string>
-    <string name="student_name_missing_placeholder">Öğrenci kullanılamıyor</string>
     <string name="homework_empty_state_message">Henüz ödev atanmadı.</string>
     <string name="homework_due_date_label">Son teslim: %1$s</string>
     <string name="homework_status_pending">Beklemede</string>

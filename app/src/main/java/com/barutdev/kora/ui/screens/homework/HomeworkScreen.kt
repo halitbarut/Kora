@@ -3,7 +3,6 @@ package com.barutdev.kora.ui.screens.homework
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
-import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,24 +21,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,10 +45,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.HomeworkStatus
-import com.barutdev.kora.navigation.KoraDestination
-import com.barutdev.kora.navigation.RouteKey
-import com.barutdev.kora.navigation.routeKey
-import com.barutdev.kora.navigation.toRouteKey
+import com.barutdev.kora.ui.navigation.FabConfig
+import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
+import com.barutdev.kora.ui.navigation.TopBarAction
+import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.screens.common.StudentNameUiStatus
 import com.barutdev.kora.ui.screens.common.deriveStudentNameUiStatus
 import com.barutdev.kora.ui.screens.homework.components.HomeworkDialog
@@ -78,18 +66,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-private data class HomeworkNavItem(
-    val destination: KoraDestination,
-    val routeKey: RouteKey,
-    val icon: ImageVector,
-    @StringRes val labelRes: Int
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeworkScreen(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
     onNavigateToStudentList: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeworkViewModel = hiltViewModel()
@@ -102,7 +80,9 @@ fun HomeworkScreen(
     val locale = LocalLocale.current
 
     LaunchedEffect(viewModel.studentId, locale) {
-        viewModel.ensureAiInsights(locale)
+        if (viewModel.hasStudentReference) {
+            viewModel.ensureAiInsights(locale)
+        }
     }
 
     HomeworkDialog(
@@ -120,198 +100,131 @@ fun HomeworkScreen(
         }
     )
 
-    HomeworkScreenContent(
-        currentRoute = currentRoute,
-        onNavigate = onNavigate,
-        onNavigateToStudentList = onNavigateToStudentList,
-        studentId = viewModel.studentId,
-        studentName = studentName,
-        homeworkList = homeworkList,
-        aiInsightsState = aiInsightsState,
-        onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
-        onAddHomework = viewModel::showAddHomeworkDialog,
-        onHomeworkClick = viewModel::showEditHomeworkDialog,
-        modifier = modifier
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable
-private fun HomeworkScreenContent(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
-    onNavigateToStudentList: () -> Unit,
-    studentId: Int,
-    studentName: String,
-    homeworkList: List<Homework>,
-    aiInsightsState: AiInsightsUiState,
-    onGenerateAiInsights: () -> Unit,
-    onAddHomework: () -> Unit,
-    onHomeworkClick: (Homework) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val locale = LocalLocale.current
-    val hasStudentId = studentId >= 0
     val studentNameStatus = deriveStudentNameUiStatus(
         studentName = studentName,
-        hasStudentReference = hasStudentId
+        hasStudentReference = viewModel.hasStudentReference
     )
-    val displayedStudentName = when (studentNameStatus) {
-        StudentNameUiStatus.Loaded -> studentName
-        StudentNameUiStatus.Loading -> koraStringResource(id = R.string.student_name_loading_placeholder)
-        StudentNameUiStatus.Missing -> koraStringResource(id = R.string.student_name_missing_placeholder)
-    }
     val homeworkLabel = koraStringResource(id = R.string.homework_title)
-    val currentRouteKey = remember(currentRoute) { currentRoute.toRouteKey() }
+    val resolvedStudentName = studentName.takeIf {
+        studentNameStatus == StudentNameUiStatus.Ready && it.isNotBlank()
+    }
+    val topBarTitle = resolvedStudentName?.let {
+        koraStringResource(
+            id = R.string.homework_top_bar_title,
+            it,
+            homeworkLabel
+        )
+    } ?: homeworkLabel
+    val navigateDescription = koraStringResource(
+        id = R.string.top_bar_navigate_to_student_list_content_description
+    )
+    val addHomeworkDescription = koraStringResource(id = R.string.homework_add_fab_content_description)
+    val containerColor = MaterialTheme.colorScheme.primary
+    val contentColor = MaterialTheme.colorScheme.onPrimary
+    val displayStudentName = studentName.takeIf { studentNameStatus == StudentNameUiStatus.Ready && it.isNotBlank() }
 
-    val navigationItems = remember {
-        listOf(
-            HomeworkNavItem(
-                destination = KoraDestination.Dashboard,
-                routeKey = KoraDestination.Dashboard.routeKey(),
-                icon = Icons.Outlined.Dashboard,
-                labelRes = R.string.dashboard_title
-            ),
-            HomeworkNavItem(
-                destination = KoraDestination.Calendar,
-                routeKey = KoraDestination.Calendar.routeKey(),
-                icon = Icons.Outlined.CalendarMonth,
-                labelRes = R.string.calendar_title
-            ),
-            HomeworkNavItem(
-                destination = KoraDestination.Homework,
-                routeKey = KoraDestination.Homework.routeKey(),
-                icon = Icons.Outlined.Assignment,
-                labelRes = R.string.homework_title
+    val topBarConfig = remember(
+        topBarTitle,
+        navigateDescription,
+        onNavigateToStudentList
+    ) {
+        TopBarConfig(
+            title = topBarTitle,
+            navigationIcon = TopBarAction(
+                icon = Icons.Outlined.Groups,
+                contentDescription = navigateDescription,
+                onClick = onNavigateToStudentList
             )
         )
     }
+    val fabConfig = remember(
+        addHomeworkDescription,
+        containerColor,
+        contentColor,
+        viewModel
+    ) {
+        FabConfig(
+            icon = Icons.Filled.Add,
+            contentDescription = addHomeworkDescription,
+            onClick = viewModel::showAddHomeworkDialog,
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    }
+    ScreenScaffoldConfig(
+        topBarConfig = topBarConfig,
+        fabConfig = fabConfig
+    )
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = koraStringResource(
-                            id = R.string.homework_top_bar_title,
-                            displayedStudentName,
-                            homeworkLabel
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateToStudentList) {
-                        Icon(
-                            imageVector = Icons.Outlined.Groups,
-                            contentDescription = koraStringResource(
-                                id = R.string.top_bar_navigate_to_student_list_content_description
-                            )
-                        )
-                    }
-                }
+    HomeworkScreenContent(
+        modifier = modifier.fillMaxSize(),
+        studentName = displayStudentName,
+        homeworkList = homeworkList,
+        aiInsightsState = aiInsightsState,
+        onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
+        onHomeworkClick = viewModel::showEditHomeworkDialog
+    )
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HomeworkScreenContent(
+    modifier: Modifier = Modifier,
+    studentName: String?,
+    homeworkList: List<Homework>,
+    aiInsightsState: AiInsightsUiState,
+    onGenerateAiInsights: () -> Unit,
+    onHomeworkClick: (Homework) -> Unit
+) {
+    val locale = LocalLocale.current
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            AiAssistantCard(
+                studentName = studentName,
+                aiState = aiInsightsState,
+                onGenerateAgain = onGenerateAiInsights,
+                modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddHomework
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = koraStringResource(id = R.string.homework_add_fab_content_description)
-                )
-            }
-        },
-        bottomBar = {
-            NavigationBar {
-                navigationItems.forEach { item ->
-                    val label = koraStringResource(id = item.labelRes)
-                    val isSelected = currentRouteKey == item.routeKey
-                    val enabled = when (item.destination) {
-                        KoraDestination.Dashboard,
-                        KoraDestination.Calendar,
-                        KoraDestination.Homework -> hasStudentId
-                        else -> true
-                    }
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            if (!enabled || isSelected) {
-                                return@NavigationBarItem
-                            }
-                            when (item.destination) {
-                                KoraDestination.Dashboard -> onNavigate(
-                                    KoraDestination.Dashboard.createRoute(studentId)
-                                )
-                                KoraDestination.Calendar -> onNavigate(
-                                    KoraDestination.Calendar.createRoute(studentId)
-                                )
-                                KoraDestination.Homework -> onNavigate(
-                                    KoraDestination.Homework.createRoute(studentId)
-                                )
-                                else -> onNavigate(item.destination.route)
-                            }
-                        },
-                        enabled = enabled,
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = label
-                            )
-                        },
-                        label = { Text(text = label) }
-                    )
-                }
-            }
         }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                AiAssistantCard(
-                    studentName = displayedStudentName,
-                    aiState = aiInsightsState,
-                    onGenerateAgain = onGenerateAiInsights,
-                    modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
-                )
-            }
+        item {
+            Text(
+                text = koraStringResource(id = R.string.homework_assignments_section_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        if (homeworkList.isEmpty()) {
             item {
                 Text(
-                    text = koraStringResource(id = R.string.homework_assignments_section_title),
-                    style = MaterialTheme.typography.titleMedium
+                    text = koraStringResource(id = R.string.homework_empty_state_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            if (homeworkList.isEmpty()) {
-                item {
-                    Text(
-                        text = koraStringResource(id = R.string.homework_empty_state_message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                items(homeworkList, key = { it.id }) { homework ->
-                    HomeworkListItem(
-                        homework = homework,
-                        locale = locale,
-                        onClick = onHomeworkClick,
-                        modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
-                    )
-                }
+        } else {
+            items(homeworkList, key = { it.id }) { homework ->
+                HomeworkListItem(
+                    homework = homework,
+                    locale = locale,
+                    onClick = onHomeworkClick,
+                    modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
+                )
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun AiAssistantCard(
-    studentName: String,
+    studentName: String?,
     aiState: AiInsightsUiState,
     onGenerateAgain: () -> Unit,
     modifier: Modifier = Modifier
@@ -371,7 +284,10 @@ private fun AiAssistantCard(
                             val message = state.messageRes?.let { resId ->
                                 when (resId) {
                                     R.string.homework_ai_no_data_message ->
-                                        koraStringResource(id = resId, studentName)
+                                        koraStringResource(
+                                            id = resId,
+                                            studentName ?: ""
+                                        )
                                     else -> koraStringResource(id = resId)
                                 }
                             } ?: koraStringResource(id = R.string.ai_generic_no_data_message)
@@ -516,15 +432,10 @@ private fun HomeworkScreenPreview() {
     )
     KoraTheme {
         HomeworkScreenContent(
-            currentRoute = KoraDestination.Homework.route,
-            onNavigate = {},
-            onNavigateToStudentList = {},
-            studentId = 1,
             studentName = "Elif Yılmaz",
             homeworkList = homeworkList,
             aiInsightsState = previewAiState,
             onGenerateAiInsights = {},
-            onAddHomework = {},
             onHomeworkClick = {},
             modifier = Modifier
         )

@@ -25,14 +25,10 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,6 +44,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.ui.navigation.FabConfig
+import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
+import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.screens.student_list.components.AddStudentDialog
 import com.barutdev.kora.ui.screens.student_list.components.StudentEditDialog
@@ -55,7 +54,6 @@ import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.util.formatCurrency
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentListScreen(
     onAddStudent: () -> Unit,
@@ -69,16 +67,43 @@ fun StudentListScreen(
     val studentToEdit by viewModel.studentToEdit.collectAsStateWithLifecycle()
     val userPreferences = LocalUserPreferences.current
 
+    val topBarTitle = koraStringResource(id = R.string.student_list_title)
+    val addStudentDescription = koraStringResource(id = R.string.student_list_add_student_fab_content_description)
+    val containerColor = MaterialTheme.colorScheme.primary
+    val contentColor = MaterialTheme.colorScheme.onPrimary
+
+    val topBarConfig = remember(topBarTitle) {
+        TopBarConfig(title = topBarTitle)
+    }
+    val fabConfig = remember(
+        addStudentDescription,
+        containerColor,
+        contentColor,
+        onAddStudent,
+        viewModel
+    ) {
+        FabConfig(
+            icon = Icons.Filled.Add,
+            contentDescription = addStudentDescription,
+            onClick = {
+                viewModel.onAddStudentClick()
+                onAddStudent()
+            },
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    }
+    ScreenScaffoldConfig(
+        topBarConfig = topBarConfig,
+        fabConfig = fabConfig
+    )
+
     StudentListScreenContent(
         students = uiState.students,
-        onAddStudent = {
-            viewModel.onAddStudentClick()
-            onAddStudent()
-        },
         onStudentClick = onStudentClick,
         onEditStudent = viewModel::onEditStudentClicked,
         currencyCode = userPreferences.currencyCode,
-        modifier = modifier
+        modifier = modifier.fillMaxSize()
     )
 
     AddStudentDialog(
@@ -96,71 +121,43 @@ fun StudentListScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 private fun StudentListScreenContent(
     students: List<StudentWithDebt>,
-    onAddStudent: () -> Unit,
     onStudentClick: (String) -> Unit,
     onEditStudent: (Student) -> Unit,
     currencyCode: String,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = koraStringResource(id = R.string.student_list_title))
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddStudent,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = koraStringResource(
-                        id = R.string.student_list_add_student_fab_content_description
-                    )
+    if (students.isEmpty()) {
+        StudentListEmptyState(
+            modifier = modifier.fillMaxSize()
+        )
+    } else {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            items(
+                items = students,
+                key = { it.student.id }
+            ) { studentWithDebt ->
+                StudentListItem(
+                    student = studentWithDebt,
+                    currencyCode = currencyCode,
+                    onStudentClick = onStudentClick,
+                    onEditClick = onEditStudent,
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
-        }
-    ) { innerPadding ->
-        if (students.isEmpty()) {
-            StudentListEmptyState(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
-            ) {
-                items(
-                    items = students,
-                    key = { it.student.id }
-                ) { studentWithDebt ->
-                    StudentListItem(
-                        student = studentWithDebt,
-                        currencyCode = currencyCode,
-                        onStudentClick = onStudentClick,
-                        onEditClick = onEditStudent,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
     }
 }
+
 
 @Composable
 private fun StudentListEmptyState(modifier: Modifier = Modifier) {
@@ -244,7 +241,7 @@ fun StudentListItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                .padding(start = 16.dp),
+                    .padding(start = 16.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -303,7 +300,6 @@ private fun StudentListScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
             students = previewStudentsWithDebt,
-            onAddStudent = {},
             onStudentClick = {},
             onEditStudent = {},
             currencyCode = "TRY"
@@ -317,7 +313,6 @@ private fun StudentListEmptyScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
             students = emptyList(),
-            onAddStudent = {},
             onStudentClick = {},
             onEditStudent = {},
             currencyCode = "TRY"

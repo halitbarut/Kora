@@ -99,6 +99,22 @@ class KoraNavGraphTest {
         assertEquals(RouteKey("dashboard"), routeKey)
     }
 
+
+    @Test
+    fun shouldShowBottomBar_returnsTrue_forBottomNavRouteWithStudent() {
+        assertTrue(shouldShowBottomBar(route = "dashboard/1", hasStudentId = true))
+    }
+
+    @Test
+    fun shouldShowBottomBar_returnsFalse_whenStudentMissing() {
+        assertFalse(shouldShowBottomBar(route = "homework/2", hasStudentId = false))
+    }
+
+    @Test
+    fun shouldShowBottomBar_returnsFalse_forNonBottomNavRoute() {
+        assertFalse(shouldShowBottomBar(route = KoraDestination.StudentList.route, hasStudentId = true))
+    }
+
     @Test
     fun toRouteKey_returnsUnknownForNullOrBlank() {
         assertEquals(RouteKey.Unknown, null.toRouteKey())

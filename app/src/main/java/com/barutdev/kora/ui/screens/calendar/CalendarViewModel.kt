@@ -35,9 +35,8 @@ class CalendarViewModel @Inject constructor(
     private val alarmScheduler: AlarmScheduler
 ) : ViewModel() {
 
-    val studentId: Int = checkNotNull(
-        savedStateHandle[STUDENT_ID_ARG]
-    )
+    val studentId: Int? = savedStateHandle[STUDENT_ID_ARG]
+    val hasStudentReference: Boolean = studentId != null
 
     private val zoneId: ZoneId = ZoneId.systemDefault()
     private val initialDate = LocalDate.now(zoneId)
@@ -54,20 +53,26 @@ class CalendarViewModel @Inject constructor(
     private val selectedLessonForLogging = MutableStateFlow<Lesson?>(null)
     val lessonToLog: StateFlow<Lesson?> = selectedLessonForLogging.asStateFlow()
 
-    val studentName: StateFlow<String> = studentRepository.getStudentById(studentId)
-        .map { student -> student?.fullName ?: "" }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ""
-        )
+    private val studentNameState: StateFlow<String> = studentId?.let { id ->
+        studentRepository.getStudentById(id)
+            .map { student -> student?.fullName ?: "" }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = ""
+            )
+    } ?: MutableStateFlow("")
+    val studentName: StateFlow<String> = studentNameState
 
-    val lessons: StateFlow<List<Lesson>> = lessonRepository.getLessonsForStudent(studentId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    private val lessonsState: StateFlow<List<Lesson>> = studentId?.let { id ->
+        lessonRepository.getLessonsForStudent(id)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+    } ?: MutableStateFlow(emptyList())
+    val lessons: StateFlow<List<Lesson>> = lessonsState
 
     fun onPreviousMonth() {
         val newMonth = currentMonthState.value.minusMonths(1)
@@ -86,9 +91,10 @@ class CalendarViewModel @Inject constructor(
     }
 
     suspend fun scheduleLesson(date: Long) {
+        val targetStudentId = studentId ?: return
         val lesson = Lesson(
             id = 0,
-            studentId = studentId,
+            studentId = targetStudentId,
             date = date,
             status = LessonStatus.SCHEDULED,
             durationInHours = null,
@@ -100,7 +106,7 @@ class CalendarViewModel @Inject constructor(
             return
         }
 
-        val studentName = studentRepository.getStudentById(studentId).first()?.fullName
+        val studentName = studentRepository.getStudentById(targetStudentId).first()?.fullName
             ?: return
 
         scheduleLessonReminders(
