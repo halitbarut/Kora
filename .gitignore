@@ -50,3 +50,20 @@ reports/
 *.hprof
 *.orig
 
+# Gradle daemons, caches, and download artifacts
+gradle-home/
+*.zip
+*.zip.part
+*.zip.ok
+
+# JetBrains IDE config
+.idea/
+*.iml
+
+# Build outputs
+/build/
+/*.apk
+*.log
+
+# Codex/temporary AI files
+CODEX.md
