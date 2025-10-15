@@ -125,6 +125,16 @@ class StudentListViewModel @Inject constructor(
         _studentToEdit.value = null
     }
 
+    fun onDeleteStudent() {
+        val student = _studentToEdit.value ?: return
+        viewModelScope.launch {
+            val success = deleteStudent(student.id)
+            if (success) {
+                onEditStudentDismiss()
+            }
+        }
+    }
+
     fun onUpdateStudent(fullName: String, hourlyRate: String) {
         val student = _studentToEdit.value ?: return
         viewModelScope.launch {
@@ -132,6 +142,15 @@ class StudentListViewModel @Inject constructor(
             if (success) {
                 onEditStudentDismiss()
             }
+        }
+    }
+
+    private suspend fun deleteStudent(studentId: Int): Boolean {
+        return try {
+            studentRepository.deleteStudent(studentId)
+            true
+        } catch (exception: Exception) {
+            false
         }
     }
 

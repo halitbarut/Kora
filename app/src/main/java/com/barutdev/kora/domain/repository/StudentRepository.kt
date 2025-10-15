@@ -13,4 +13,6 @@ interface StudentRepository {
     suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double)
 
     suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
+
+    suspend fun deleteStudent(studentId: Int)
 }

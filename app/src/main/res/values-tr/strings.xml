@@ -176,4 +176,12 @@
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Öğrenciyi Düzenle</string>
+    <string name="edit_student_section_header">Öğrenciyi Düzenle</string>
+    <string name="delete_student_section_header">Öğrenciyi Sil</string>
+    <string name="delete_student_button">Öğrenciyi Sil</string>
+    <string name="delete_student_confirmation_title">Öğrenciyi sil?</string>
+    <string name="delete_student_section_body">%1$s öğrencisini silmek tüm derslerini ve ödevlerini kaldırır. Bu işlem geri alınamaz.</string>
+    <string name="delete_student_confirmation_message">%1$s öğrencisini silmek istediğine emin misin? Bu işlem geri alınamaz.</string>
+    <string name="delete_student_confirmation_keep">Öğrenciyi Tut</string>
+    <string name="dialog_action_delete">Sil</string>
 </resources>

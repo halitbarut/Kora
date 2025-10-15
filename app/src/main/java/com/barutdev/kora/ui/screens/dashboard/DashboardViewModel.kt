@@ -33,8 +33,11 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -60,6 +63,10 @@ data class DashboardUiState(
     val lessonToLog: Lesson? = null
 )
 
+sealed interface DashboardEvent {
+    data object StudentRemoved : DashboardEvent
+}
+
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -81,6 +88,9 @@ class DashboardViewModel @Inject constructor(
     private val _aiInsightsState = MutableStateFlow(AiInsightsUiState())
     val aiInsightsState: StateFlow<AiInsightsUiState> = _aiInsightsState.asStateFlow()
 
+    private val _events = MutableSharedFlow<DashboardEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<DashboardEvent> = _events.asSharedFlow()
+
     private var lastRequestedLocale: Locale? = null
     private var lastAiInputSignature: String? = null
     private var cachedAiInsight: CachedAiInsight? = null
@@ -91,6 +101,7 @@ class DashboardViewModel @Inject constructor(
     private var aiInsightsJob: Job? = null
     private var activeRequestSignature: String? = null
     private var isCacheFetchInProgress: Boolean = false
+    private var hasReceivedInitialStudentEmission = false
 
     private val addLessonDialogVisibility = MutableStateFlow(false)
     private val logLessonDialogVisibility = MutableStateFlow(false)
@@ -124,6 +135,7 @@ class DashboardViewModel @Inject constructor(
             combine(student, lessons, homework) { studentSnapshot, lessonsSnapshot, homeworkSnapshot ->
                 Triple(studentSnapshot, lessonsSnapshot, homeworkSnapshot)
             }.collect { (studentSnapshot, lessonsSnapshot, homeworkSnapshot) ->
+                val previousStudentSnapshot = latestStudentSnapshot
                 latestStudentSnapshot = studentSnapshot
                 latestLessonsSnapshot = lessonsSnapshot
                 latestHomeworkSnapshot = homeworkSnapshot
@@ -176,6 +188,14 @@ class DashboardViewModel @Inject constructor(
                         force = false
                     )
                 }
+                if (!hasReceivedInitialStudentEmission) {
+                    hasReceivedInitialStudentEmission = true
+                    if (studentSnapshot == null) {
+                        _events.tryEmit(DashboardEvent.StudentRemoved)
+                    }
+                } else if (previousStudentSnapshot != null && studentSnapshot == null) {
+                    _events.tryEmit(DashboardEvent.StudentRemoved)
+                }
             }
         }
     }
@@ -211,7 +231,7 @@ class DashboardViewModel @Inject constructor(
         val totalHours = completedLessons.mapNotNull { it.durationInHours }.sum()
         val hourlyRate = student?.hourlyRate ?: 0.0
         DashboardUiState(
-            studentId = student?.id ?: this@DashboardViewModel.studentId,
+            studentId = student?.id,
             studentName = student?.fullName.orEmpty(),
             hourlyRate = hourlyRate,
             totalHours = totalHours,

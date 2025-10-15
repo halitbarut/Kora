@@ -117,7 +117,8 @@ fun StudentListScreen(
         showDialog = isEditDialogVisible,
         student = studentToEdit,
         onDismiss = viewModel::onEditStudentDismiss,
-        onSave = viewModel::onUpdateStudent
+        onSave = viewModel::onUpdateStudent,
+        onDelete = viewModel::onDeleteStudent
     )
 }
 
