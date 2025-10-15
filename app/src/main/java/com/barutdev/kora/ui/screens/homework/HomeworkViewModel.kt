@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.homework
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -97,6 +98,7 @@ class HomeworkViewModel @Inject constructor(
     private var isCacheFetchInProgress: Boolean = false
 
     init {
+        Log.d("HomeworkViewModel", "Created for studentId=$studentId")
         if (hasStudentReference) {
             observeAiInsights()
         }

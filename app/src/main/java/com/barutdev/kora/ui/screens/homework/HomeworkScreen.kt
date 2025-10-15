@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.homework
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
@@ -69,8 +70,11 @@ import java.util.Locale
 @Composable
 fun HomeworkScreen(
     onNavigateToStudentList: () -> Unit,
+    expectedStudentId: Int? = null,
     modifier: Modifier = Modifier,
-    viewModel: HomeworkViewModel = hiltViewModel()
+    viewModel: HomeworkViewModel = hiltViewModel(
+        key = expectedStudentId?.let { "homework-$it" } ?: "homework-default"
+    )
 ) {
     val studentName by viewModel.studentName.collectAsStateWithLifecycle()
     val homeworkList by viewModel.homework.collectAsStateWithLifecycle()
@@ -79,6 +83,12 @@ fun HomeworkScreen(
     val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
     val locale = LocalLocale.current
 
+    LaunchedEffect(expectedStudentId) {
+        Log.d("HomeworkScreen", "Composing for expectedStudentId=$expectedStudentId")
+    }
+    LaunchedEffect(viewModel.studentId) {
+        Log.d("HomeworkScreen", "Rendering homework for studentId=${viewModel.studentId}")
+    }
     LaunchedEffect(viewModel.studentId, locale) {
         if (viewModel.hasStudentReference) {
             viewModel.ensureAiInsights(locale)

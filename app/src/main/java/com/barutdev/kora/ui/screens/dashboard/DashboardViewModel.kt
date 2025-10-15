@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.dashboard
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,6 +76,8 @@ class DashboardViewModel @Inject constructor(
         savedStateHandle[STUDENT_ID_ARG]
     )
 
+    val boundStudentId: Int = studentId
+
     private val _aiInsightsState = MutableStateFlow(AiInsightsUiState())
     val aiInsightsState: StateFlow<AiInsightsUiState> = _aiInsightsState.asStateFlow()
 
@@ -116,6 +119,7 @@ class DashboardViewModel @Inject constructor(
             )
 
     init {
+        Log.d("DashboardViewModel", "Created for studentId=$studentId")
         viewModelScope.launch {
             combine(student, lessons, homework) { studentSnapshot, lessonsSnapshot, homeworkSnapshot ->
                 Triple(studentSnapshot, lessonsSnapshot, homeworkSnapshot)

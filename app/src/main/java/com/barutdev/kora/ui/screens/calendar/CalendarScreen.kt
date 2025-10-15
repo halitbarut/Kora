@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.calendar
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,8 +78,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun CalendarScreen(
     onNavigateToStudentList: () -> Unit,
+    expectedStudentId: Int? = null,
     modifier: Modifier = Modifier,
-    viewModel: CalendarViewModel = hiltViewModel()
+    viewModel: CalendarViewModel = hiltViewModel(
+        key = expectedStudentId?.let { "calendar-$it" } ?: "calendar-default"
+    )
 ) {
     val scaffoldController = LocalKoraScaffoldController.current
     val studentName by viewModel.studentName.collectAsStateWithLifecycle()
@@ -89,6 +94,15 @@ fun CalendarScreen(
     val coroutineScope = rememberCoroutineScope()
     val zoneId = remember { ZoneId.systemDefault() }
     val snackbarHostState = scaffoldController.snackbarHostState
+
+    LaunchedEffect(expectedStudentId) {
+        Log.d("CalendarScreen", "Composing for expectedStudentId=$expectedStudentId")
+    }
+    LaunchedEffect(viewModel.studentId) {
+        viewModel.studentId?.let { id ->
+            Log.d("CalendarScreen", "Rendering calendar for studentId=$id")
+        }
+    }
 
     val studentNameStatus = deriveStudentNameUiStatus(
         studentName = studentName,
