@@ -1,6 +1,7 @@
 package com.barutdev.kora.navigation
 
 import androidx.compose.runtime.MonotonicFrameClock
+import androidx.navigation.compose.ComposeNavigator
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.Assert.assertFalse
@@ -14,17 +15,20 @@ private object ImmediateFrameClock : MonotonicFrameClock {
 class BottomNavTransitionStateTest {
 
     @Test
-    fun shouldAnimate_isDisabledUntilPrimedForBottomNavRoutes() = runTest {
+    fun shouldAnimate_isDisabledUntilPrimedForBottomNavDestinations() = runTest {
         val state = BottomNavTransitionState()
-        val initialRoute = KoraDestination.Dashboard.createRoute(studentId = 11)
-        val targetRoute = KoraDestination.Calendar.createRoute(studentId = 11)
+        val initialDestination = destination(KoraDestination.Dashboard.route)
+        val targetDestination = destination(KoraDestination.Calendar.route)
 
-        assertFalse(state.shouldAnimate(initialRoute, targetRoute))
+        assertFalse(state.shouldAnimate(initialDestination, targetDestination))
 
         withContext(ImmediateFrameClock) {
             state.markPrimedAfterFirstFrames()
         }
 
-        assertTrue(state.shouldAnimate(initialRoute, targetRoute))
+        assertTrue(state.shouldAnimate(initialDestination, targetDestination))
     }
+
+    private fun destination(route: String) =
+        ComposeNavigator.Destination(ComposeNavigator()) {}.apply { this.route = route }
 }
