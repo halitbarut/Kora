@@ -176,4 +176,12 @@
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Schüler bearbeiten</string>
+    <string name="edit_student_section_header">Schüler bearbeiten</string>
+    <string name="delete_student_section_header">Schüler löschen</string>
+    <string name="delete_student_button">Schüler löschen</string>
+    <string name="delete_student_confirmation_title">Schüler löschen?</string>
+    <string name="delete_student_section_body">Beim Löschen von %1$s werden alle Stunden und Hausaufgaben entfernt. Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_student_confirmation_message">Möchtest du %1$s wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_student_confirmation_keep">Schüler behalten</string>
+    <string name="dialog_action_delete">Löschen</string>
 </resources>

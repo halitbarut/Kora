@@ -2,7 +2,6 @@ package com.barutdev.kora.domain.model.ai
 
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
-import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.model.Student
 import java.time.Instant
 import java.time.ZoneId
@@ -64,27 +63,33 @@ object AiInsightsSignatureBuilder {
             append('|')
             append(locale.toLanguageTag())
             append('|')
-        if (student != null) {
-            append(student.id)
-            append(';')
-            append(sanitize(student.fullName))
-        } else {
-            append("student_missing")
-        }
+            if (student != null) {
+                append(student.id)
+                append(';')
+                append(sanitize(student.fullName))
+            } else {
+                append("student_missing")
+            }
             append('|')
             when (focus) {
                 AiInsightsFocus.DASHBOARD -> {
-                    val completedLessons = lessons
-                        .filter { it.status == LessonStatus.COMPLETED }
-                        .sortedBy { it.id }
-                        .joinToString(separator = "|") { it.toSummary() }
-                    val upcomingLessons = lessons
-                        .filter { it.status == LessonStatus.SCHEDULED }
-                        .sortedBy { it.id }
-                        .joinToString(separator = "|") { it.toSummary() }
-                    append(completedLessons)
+                    val nowMillis = System.currentTimeMillis()
+                    val sortedLessons = lessons.sortedBy { it.date }
+                    val (historicalLessons, upcomingLessons) =
+                        sortedLessons.partition { it.date < nowMillis }
+                    append(
+                        historicalLessons
+                            .sortedByDescending { it.date }
+                            .take(10)
+                            .joinToString(separator = "|") { it.toSummary() }
+                    )
                     append("||")
-                    append(upcomingLessons)
+                    append(
+                        upcomingLessons
+                            .sortedBy { it.date }
+                            .take(10)
+                            .joinToString(separator = "|") { it.toSummary() }
+                    )
                     append("||")
                     append(
                         homework

@@ -39,6 +39,9 @@ interface StudentDao {
     @Query("SELECT * FROM students")
     suspend fun getStudentsSnapshot(): List<StudentEntity>
 
+    @Query("DELETE FROM students WHERE id = :studentId")
+    suspend fun deleteById(studentId: Int)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(students: List<StudentEntity>)
 

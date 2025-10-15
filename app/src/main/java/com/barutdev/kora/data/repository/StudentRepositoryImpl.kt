@@ -36,4 +36,8 @@ class StudentRepositoryImpl @Inject constructor(
     override suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double) {
         studentDao.updateStudent(studentId, fullName, hourlyRate)
     }
+
+    override suspend fun deleteStudent(studentId: Int) {
+        studentDao.deleteById(studentId)
+    }
 }

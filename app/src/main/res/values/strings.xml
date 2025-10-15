@@ -176,5 +176,13 @@
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Edit Student</string>
+    <string name="edit_student_section_header">Edit Student</string>
+    <string name="delete_student_section_header">Delete Student</string>
+    <string name="delete_student_button">Delete Student</string>
+    <string name="delete_student_confirmation_title">Delete student?</string>
+    <string name="delete_student_section_body">Deleting %1$s will remove their lessons and homework. This action cannot be undone.</string>
+    <string name="delete_student_confirmation_message">Are you sure you want to delete %1$s? This action cannot be undone.</string>
+    <string name="delete_student_confirmation_keep">Keep Student</string>
+    <string name="dialog_action_delete">Delete</string>
 
 </resources>

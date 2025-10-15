@@ -1,11 +1,11 @@
 package com.barutdev.kora.domain.usecase
 
+import android.util.Log
 import com.barutdev.kora.domain.exception.AiException
 import com.barutdev.kora.domain.exception.EmptyAiResponseException
 import com.barutdev.kora.domain.exception.MissingAiApiKeyException
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
-import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.model.Student
 import com.barutdev.kora.domain.model.ai.AiInsightsComputation
 import com.barutdev.kora.domain.model.ai.AiInsightsFocus
@@ -95,6 +95,7 @@ class GenerateAiInsightsUseCase @Inject constructor(
         focus: AiInsightsFocus,
         locale: Locale
     ): String {
+        val nowMillis = System.currentTimeMillis()
         val languageTag = locale.toLanguageTag()
         val zoneId = ZoneId.systemDefault()
         val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", locale)
@@ -102,18 +103,34 @@ class GenerateAiInsightsUseCase @Inject constructor(
             maximumFractionDigits = 2
         }
 
-        val nowMillis = System.currentTimeMillis()
-        val completedLessons = lessons
-            .filter { it.status == LessonStatus.COMPLETED }
+        val sortedLessons = lessons.sortedBy { it.date }
+        val (historicalLessonsRaw, upcomingLessonsRaw) =
+            sortedLessons.partition { it.date < nowMillis }
+        val historicalLessons = historicalLessonsRaw
             .sortedByDescending { it.date }
             .take(10)
-        val upcomingLessons = lessons
-            .filter { it.status == LessonStatus.SCHEDULED && it.date >= nowMillis }
+        val upcomingLessons = upcomingLessonsRaw
             .sortedBy { it.date }
-            .take(5)
+            .take(10)
         val homeworkSummaries = homework
             .sortedByDescending { it.dueDate }
             .take(10)
+
+        val earliestLesson = lessons.minByOrNull { it.date }?.date
+        val latestLesson = lessons.maxByOrNull { it.date }?.date
+        val earliestLessonText = earliestLesson?.let {
+            Instant.ofEpochMilli(it).atZone(zoneId).toLocalDate().format(dateFormatter)
+        } ?: "n/a"
+        val latestLessonText = latestLesson?.let {
+            Instant.ofEpochMilli(it).atZone(zoneId).toLocalDate().format(dateFormatter)
+        } ?: "n/a"
+
+        Log.d(
+            TAG,
+            "Building AI prompt for student=${student.id} (${student.fullName}). " +
+                "Lessons total=${lessons.size}, historical=${historicalLessonsRaw.size}, " +
+                "upcoming=${upcomingLessonsRaw.size}, range=$earliestLessonText-$latestLessonText"
+        )
 
         fun sanitize(value: String?): String? {
             if (value.isNullOrBlank()) return null
@@ -152,7 +169,8 @@ class GenerateAiInsightsUseCase @Inject constructor(
         }
 
         val focusDescription = when (focus) {
-            AiInsightsFocus.DASHBOARD -> "lesson engagement trends and upcoming priorities"
+            AiInsightsFocus.DASHBOARD ->
+                "recent lesson engagement trends, historical progress, and upcoming priorities"
             AiInsightsFocus.HOMEWORK -> "homework performance, completion trends, and suggested next steps"
         }
 
@@ -160,6 +178,7 @@ class GenerateAiInsightsUseCase @Inject constructor(
             appendLine("You are an AI assistant helping a private tutor prepare personalised insights.")
             appendLine("Respond in $languageTag using a professional, encouraging tone.")
             appendLine("Keep insights concise (no more than 2 sentences) and include at least one actionable recommendation for the next session.")
+            appendLine("Reference both historical lesson performance and upcoming plans when relevant.")
             appendLine("Do not reference payments, fees, pricing, or hourly rates in your response.")
             appendLine()
             appendLine("Student profile:")
@@ -167,14 +186,14 @@ class GenerateAiInsightsUseCase @Inject constructor(
             appendLine()
             appendLine("Focus: $focusDescription")
             appendLine()
-            appendLine("Completed lessons (latest first):")
-            if (completedLessons.isEmpty()) {
+            appendLine("Historical lessons (latest first):")
+            if (historicalLessons.isEmpty()) {
                 appendLine("- none")
             } else {
-                completedLessons.forEach { appendLine("- ${it.toSummary()}") }
+                historicalLessons.forEach { appendLine("- ${it.toSummary()}") }
             }
             appendLine()
-            appendLine("Upcoming lessons:")
+            appendLine("Upcoming lessons (chronological):")
             if (upcomingLessons.isEmpty()) {
                 appendLine("- none")
             } else {
@@ -190,5 +209,9 @@ class GenerateAiInsightsUseCase @Inject constructor(
             appendLine()
             appendLine("Return only the insight text without bullet points or preambles.")
         }
+    }
+
+    companion object {
+        private const val TAG = "GenerateAiInsights"
     }
 }

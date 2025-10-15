@@ -107,6 +107,14 @@ fun DashboardScreen(
         }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                DashboardEvent.StudentRemoved -> onNavigateToStudentList()
+            }
+        }
+    }
+
     val studentNameStatus = deriveStudentNameUiStatus(
         studentName = uiState.studentName,
         hasStudentReference = uiState.studentId != null
