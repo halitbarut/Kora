@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.calendar
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -73,6 +74,10 @@ class CalendarViewModel @Inject constructor(
             )
     } ?: MutableStateFlow(emptyList())
     val lessons: StateFlow<List<Lesson>> = lessonsState
+
+    init {
+        Log.d("CalendarViewModel", "Created for studentId=$studentId")
+    }
 
     fun onPreviousMonth() {
         val newMonth = currentMonthState.value.minusMonths(1)

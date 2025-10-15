@@ -1,5 +1,7 @@
 package com.barutdev.kora.ui.screens.dashboard
 
+import android.util.Log
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
@@ -75,14 +77,29 @@ private data class CompletedLessonUiModel(
 fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToStudentList: () -> Unit,
+    expectedStudentId: Int? = null,
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(
+        key = expectedStudentId?.let { "dashboard-$it" } ?: "dashboard-default"
+    )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val userPreferences = LocalUserPreferences.current
     val locale = LocalLocale.current
+
+    LaunchedEffect(expectedStudentId) {
+        Log.d("DashboardScreen", "Composing for expectedStudentId=$expectedStudentId")
+    }
+    LaunchedEffect(viewModel.boundStudentId) {
+        Log.d("DashboardScreen", "ViewModel bound to studentId=${viewModel.boundStudentId}")
+    }
+    LaunchedEffect(uiState.studentId) {
+        uiState.studentId?.let { resolvedId ->
+            Log.d("DashboardScreen", "Rendering dashboard for studentId=$resolvedId")
+        }
+    }
 
     LaunchedEffect(uiState.studentId, locale) {
         if (uiState.studentId != null) {

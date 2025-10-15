@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.navigation.NavDestination
 
 internal class BottomNavTransitionState {
 
@@ -29,12 +30,10 @@ internal class BottomNavTransitionState {
      * pre-warm step completes we avoid animating between bottom navigation destinations to remove
      * the cold start hitch that occurs while screens finish their initial load.
      */
-    fun shouldAnimate(initialRoute: String?, targetRoute: String?): Boolean {
+    fun shouldAnimate(initialDestination: NavDestination?, targetDestination: NavDestination?): Boolean {
         if (hasPrimedBottomNav) return true
-        val initialKey = initialRoute.toRouteKey()
-        val targetKey = targetRoute.toRouteKey()
-        val involvesBottomNav = bottomNavRouteKeySet.contains(initialKey) ||
-            bottomNavRouteKeySet.contains(targetKey)
-        return !involvesBottomNav
+        val initialIsBottom = KoraDestination.studentScopedFromRoute(initialDestination?.route) != null
+        val targetIsBottom = KoraDestination.studentScopedFromRoute(targetDestination?.route) != null
+        return !(initialIsBottom || targetIsBottom)
     }
 }
