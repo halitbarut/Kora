@@ -67,3 +67,31 @@ gradle-home/
 
 # Codex/temporary AI files
 CODEX.md
+
+# Build artifacts (all modules and depths)
+**/build/
+
+# Native/NDK build folders (module-level)
+.externalNativeBuild/
+**/.externalNativeBuild/
+**/.cxx/
+
+# Kotlin/IntelliJ artifacts
+*.kotlin_module
+.kotlin/
+out/
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+# Secret/signing property files
+keystore.properties
+signing.properties
+secrets.properties
+
+# Optional editors and OS noise
+.vscode/
+ehthumbs.db
+.Spotlight-V100
+.Trashes
