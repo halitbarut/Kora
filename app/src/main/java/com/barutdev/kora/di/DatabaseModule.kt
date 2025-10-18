@@ -54,4 +54,10 @@ object DatabaseModule {
     fun provideAiInsightDao(
         database: KoraDatabase
     ): AiInsightDao = database.aiInsightDao()
+
+    @Provides
+    @Singleton
+    fun providePaymentRecordDao(
+        database: KoraDatabase
+    ): com.barutdev.kora.data.local.PaymentRecordDao = database.paymentRecordDao()
 }

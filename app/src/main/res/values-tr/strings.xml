@@ -184,4 +184,16 @@
     <string name="delete_student_confirmation_message">%1$s öğrencisini silmek istediğine emin misin? Bu işlem geri alınamaz.</string>
     <string name="delete_student_confirmation_keep">Öğrenciyi Tut</string>
     <string name="dialog_action_delete">Sil</string>
+
+    <!-- Payment History (generic, i18n) -->
+    <string name="payment_history_title">Ödeme Geçmişi</string>
+    <string name="close_button">Kapat</string>
+    <string name="no_payment_history_toast">Ödeme geçmişi bulunamadı.</string>
++    <string name="no_debt_to_pay_toast">Ödenecek borç bulunmuyor.</string>
+
+    <!-- Mark as Paid Confirmation Dialog -->
+    <string name="dashboard_mark_paid_confirm_title">Ödemeyi Onayla</string>
+    <string name="dashboard_mark_paid_confirm_message">Mevcut dönem için bir ödeme kaydı oluşturulacak ve tamamlanan dersler temizlenecek. Devam edilsin mi?</string>
+    <string name="dashboard_mark_paid_confirm">Onayla</string>
+    <string name="dashboard_mark_paid_cancel">İptal</string>
 </resources>

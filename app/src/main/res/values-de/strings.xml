@@ -184,4 +184,16 @@
     <string name="delete_student_confirmation_message">Möchtest du %1$s wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
     <string name="delete_student_confirmation_keep">Schüler behalten</string>
     <string name="dialog_action_delete">Löschen</string>
+    
+    <!-- Payment History (generic, i18n) -->
+    <string name="payment_history_title">Zahlungsverlauf</string>
+    <string name="close_button">Schließen</string>
+    <string name="no_payment_history_toast">Kein Zahlungsverlauf gefunden.</string>
++    <string name="no_debt_to_pay_toast">Es sind keine Schulden offen.</string>
+
+    <!-- Mark as Paid Confirmation Dialog -->
+    <string name="dashboard_mark_paid_confirm_title">Zahlung bestätigen</string>
+    <string name="dashboard_mark_paid_confirm_message">Für den aktuellen Zeitraum wird eine Zahlung erfasst und abgeschlossene Stunden werden zurückgesetzt. Fortfahren?</string>
+    <string name="dashboard_mark_paid_confirm">Bestätigen</string>
+    <string name="dashboard_mark_paid_cancel">Abbrechen</string>
 </resources>

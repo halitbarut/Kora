@@ -62,6 +62,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindPaymentRepository(
+        impl: com.barutdev.kora.data.repository.PaymentRepositoryImpl
+    ): com.barutdev.kora.domain.repository.PaymentRepository
+
+    @Binds
+    @Singleton
     abstract fun bindUserPreferencesRepository(
         impl: DataUserPreferencesRepository
     ): UserPreferencesRepository

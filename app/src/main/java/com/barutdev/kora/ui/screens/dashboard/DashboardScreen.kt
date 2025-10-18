@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +30,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.barutdev.kora.domain.model.PaymentRecord
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
@@ -66,6 +70,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import kotlinx.coroutines.launch
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import android.content.res.Configuration
 
 private data class CompletedLessonUiModel(
     val dateText: String,
@@ -84,10 +91,16 @@ fun DashboardScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
+val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val userPreferences = LocalUserPreferences.current
     val locale = LocalLocale.current
+    val context = LocalContext.current
+    val localizedContext = remember(context, locale) {
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(locale)
+        context.createConfigurationContext(configuration)
+    }
 
     LaunchedEffect(expectedStudentId) {
         Log.d("DashboardScreen", "Composing for expectedStudentId=$expectedStudentId")
@@ -107,10 +120,17 @@ fun DashboardScreen(
         }
     }
 
-    LaunchedEffect(viewModel) {
+LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 DashboardEvent.StudentRemoved -> onNavigateToStudentList()
+is DashboardEvent.ShowToast -> {
+                    Toast.makeText(
+                        localizedContext,
+                        localizedContext.getString(event.messageRes),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -164,6 +184,20 @@ fun DashboardScreen(
         }
     )
 
+    val paymentHistory by viewModel.paymentHistory.collectAsStateWithLifecycle()
+PaymentHistoryDialog(
+        showDialog = uiState.isPaymentHistoryDialogVisible,
+        records = paymentHistory,
+        currencyCode = userPreferences.currencyCode,
+        onDismiss = viewModel::dismissPaymentHistoryDialog
+    )
+
+    MarkAsPaidConfirmDialog(
+        showDialog = uiState.isMarkAsPaidDialogVisible,
+        onConfirm = { viewModel.confirmMarkAsPaidAndDismiss() },
+        onDismiss = viewModel::dismissMarkAsPaidDialog
+    )
+
     LogLessonDialog(
         showDialog = uiState.isLogLessonDialogVisible,
         lesson = uiState.lessonToLog,
@@ -185,11 +219,8 @@ fun DashboardScreen(
         upcomingLessons = uiState.upcomingLessons,
         pastLessonsToLog = uiState.pastLessonsToLog,
         onLogLessonClick = viewModel::onLogLessonClicked,
-        onMarkCurrentCycleAsPaid = {
-            coroutineScope.launch {
-                viewModel.markCurrentCycleAsPaid()
-            }
-        },
+onMarkCurrentCycleAsPaid = viewModel::showMarkAsPaidDialog,
+        onShowPaymentHistory = viewModel::showPaymentHistoryDialog,
         currencyCode = userPreferences.currencyCode,
         aiInsightsState = aiInsightsState,
         onGenerateAiInsights = { viewModel.retryAiInsights(locale) },
@@ -208,6 +239,7 @@ private fun DashboardBody(
     pastLessonsToLog: List<Lesson>,
     onLogLessonClick: (Lesson) -> Unit,
     onMarkCurrentCycleAsPaid: () -> Unit,
+    onShowPaymentHistory: () -> Unit,
     currencyCode: String,
     aiInsightsState: AiInsightsUiState,
     onGenerateAiInsights: () -> Unit,
@@ -220,12 +252,21 @@ private fun DashboardBody(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val noDebtMessage = koraStringResource(id = R.string.no_debt_to_pay_toast)
+        val context = LocalContext.current
         PaymentTrackingCard(
             totalHours = totalHours,
             hourlyRate = hourlyRate,
             totalAmountDue = totalAmountDue,
             lastPaymentDate = lastPaymentDate,
-            onMarkPaidClick = onMarkCurrentCycleAsPaid,
+            onMarkPaidClick = {
+                if (totalAmountDue > 0.0) {
+                    onMarkCurrentCycleAsPaid()
+                } else {
+                    Toast.makeText(context, noDebtMessage, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onShowPaymentHistory = onShowPaymentHistory,
             currencyCode = currencyCode,
             locale = locale
         )
@@ -320,12 +361,13 @@ private fun LogPastLessonsCard(
 }
 
 @Composable
-private fun PaymentTrackingCard(
+fun PaymentTrackingCard(
     totalHours: Double,
     hourlyRate: Double,
     totalAmountDue: Double,
     lastPaymentDate: Long?,
     onMarkPaidClick: () -> Unit,
+    onShowPaymentHistory: () -> Unit,
     currencyCode: String,
     locale: Locale,
     modifier: Modifier = Modifier
@@ -373,10 +415,22 @@ private fun PaymentTrackingCard(
             modifier = Modifier.padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = koraStringResource(id = R.string.dashboard_payment_cycle_title),
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = koraStringResource(id = R.string.dashboard_payment_cycle_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                IconButton(onClick = onShowPaymentHistory) {
+                    Icon(
+                        imageVector = Icons.Outlined.History,
+                        contentDescription = koraStringResource(id = R.string.dashboard_payment_history_icon_description)
+                    )
+                }
+            }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = koraStringResource(
@@ -408,6 +462,74 @@ private fun PaymentTrackingCard(
             }
         }
     }
+}
+
+@Composable
+fun PaymentHistoryDialog(
+    showDialog: Boolean,
+    records: List<PaymentRecord>,
+    currencyCode: String,
+    onDismiss: () -> Unit
+) {
+    if (!showDialog) return
+val title = koraStringResource(id = R.string.payment_history_title)
+    val empty = koraStringResource(id = R.string.no_payment_history_toast)
+    val close = koraStringResource(id = R.string.close_button)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = {
+            if (records.isEmpty()) {
+                Text(text = empty)
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    records.forEach { rec ->
+                        val amountText = formatCurrency(rec.amountMinor / 100.0, currencyCode)
+                        val dateText = DateTimeFormatter
+                            .ofLocalizedDate(FormatStyle.LONG)
+                            .format(Instant.ofEpochMilli(rec.paidAtEpochMs).atZone(ZoneId.systemDefault()).toLocalDate())
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = dateText, style = MaterialTheme.typography.bodyLarge)
+                            Text(text = amountText, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = close)
+            }
+        }
+    )
+}
+
+@Composable
+fun MarkAsPaidConfirmDialog(
+    showDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (!showDialog) return
+    val title = koraStringResource(id = R.string.dashboard_mark_paid_confirm_title)
+    val message = koraStringResource(id = R.string.dashboard_mark_paid_confirm_message)
+    val confirm = koraStringResource(id = R.string.dashboard_mark_paid_confirm)
+    val cancel = koraStringResource(id = R.string.dashboard_mark_paid_cancel)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = { Text(text = message) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(text = confirm) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = cancel) }
+        }
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -738,6 +860,7 @@ private fun DashboardScreenPreview() {
             pastLessonsToLog = previewUiState.pastLessonsToLog,
             onLogLessonClick = {},
             onMarkCurrentCycleAsPaid = {},
+            onShowPaymentHistory = {},
             currencyCode = "TRY",
             aiInsightsState = previewAiState,
             onGenerateAiInsights = {}
