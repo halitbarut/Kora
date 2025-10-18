@@ -185,4 +185,22 @@
     <string name="delete_student_confirmation_keep">Keep Student</string>
     <string name="dialog_action_delete">Delete</string>
 
+    <!-- Payment History Dialog -->
+    <string name="dashboard_payment_history_title">Payment history</string>
+    <string name="dashboard_payment_history_icon_description">View payment history</string>
+    <string name="dashboard_payment_history_empty">No payments yet</string>
+    <string name="dashboard_payment_history_close">Close</string>
+
+    <!-- Payment History (generic, i18n) -->
+    <string name="payment_history_title">Payment History</string>
+    <string name="close_button">Close</string>
+    <string name="no_payment_history_toast">No payment history found.</string>
++    <string name="no_debt_to_pay_toast">There is no outstanding debt.</string>
+
+    <!-- Mark as Paid Confirmation Dialog -->
+    <string name="dashboard_mark_paid_confirm_title">Confirm payment</string>
+    <string name="dashboard_mark_paid_confirm_message">This will record a payment for the current cycle and clear completed lessons. Continue?</string>
+    <string name="dashboard_mark_paid_confirm">Confirm</string>
+    <string name="dashboard_mark_paid_cancel">Cancel</string>
+
 </resources>

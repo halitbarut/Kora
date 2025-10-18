@@ -9,8 +9,8 @@ import com.barutdev.kora.data.local.entity.LessonEntity
 import com.barutdev.kora.data.local.entity.StudentEntity
 
 @Database(
-    entities = [StudentEntity::class, LessonEntity::class, HomeworkEntity::class, AiInsightEntity::class],
-    version = 6,
+    entities = [StudentEntity::class, LessonEntity::class, HomeworkEntity::class, AiInsightEntity::class, com.barutdev.kora.data.local.entity.PaymentRecordEntity::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(LessonStatusConverter::class, HomeworkStatusConverter::class)
@@ -23,4 +23,6 @@ abstract class KoraDatabase : RoomDatabase() {
     abstract fun homeworkDao(): HomeworkDao
 
     abstract fun aiInsightDao(): AiInsightDao
+
+    abstract fun paymentRecordDao(): PaymentRecordDao
 }

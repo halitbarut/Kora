@@ -9,6 +9,7 @@ import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.PaymentRecord
 import com.barutdev.kora.domain.model.ai.AiInsightsComputation
 import com.barutdev.kora.domain.model.ai.AiInsightsFocus
 import com.barutdev.kora.domain.model.ai.AiInsightsSignatureBuilder
@@ -20,6 +21,7 @@ import com.barutdev.kora.domain.repository.AiInsightsGenerationTracker
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.StudentRepository
+import com.barutdev.kora.domain.repository.PaymentRepository
 import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
 import com.barutdev.kora.notifications.AlarmScheduler
@@ -60,11 +62,14 @@ data class DashboardUiState(
     val upcomingLessons: List<Lesson> = emptyList(),
     val pastLessonsToLog: List<Lesson> = emptyList(),
     val isLogLessonDialogVisible: Boolean = false,
-    val lessonToLog: Lesson? = null
+    val lessonToLog: Lesson? = null,
+    val isPaymentHistoryDialogVisible: Boolean = false,
+    val isMarkAsPaidDialogVisible: Boolean = false
 )
 
 sealed interface DashboardEvent {
     data object StudentRemoved : DashboardEvent
+    data class ShowToast(val messageRes: Int) : DashboardEvent
 }
 
 @HiltViewModel
@@ -76,7 +81,8 @@ class DashboardViewModel @Inject constructor(
     private val aiInsightsCacheRepository: AiInsightsCacheRepository,
     private val aiInsightsGenerationTracker: AiInsightsGenerationTracker,
     private val alarmScheduler: AlarmScheduler,
-    private val generateAiInsightsUseCase: GenerateAiInsightsUseCase
+    private val generateAiInsightsUseCase: GenerateAiInsightsUseCase,
+    private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val studentId: Int = checkNotNull(
@@ -107,6 +113,9 @@ class DashboardViewModel @Inject constructor(
     private val logLessonDialogVisibility = MutableStateFlow(false)
     private val selectedLessonForLogging = MutableStateFlow<Lesson?>(null)
 
+private val paymentHistoryDialogVisibility = MutableStateFlow(false)
+    private val markAsPaidDialogVisibility = MutableStateFlow(false)
+
     val student: StateFlow<Student?> = studentRepository.getStudentById(studentId)
         .stateIn(
             scope = viewModelScope,
@@ -123,6 +132,14 @@ class DashboardViewModel @Inject constructor(
 
     private val homework: StateFlow<List<Homework>> =
         homeworkRepository.getHomeworkForStudent(studentId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    val paymentHistory: StateFlow<List<PaymentRecord>> =
+        paymentRepository.observePaymentHistory(studentId)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -200,7 +217,7 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<DashboardUiState> = combine(
+private val baseUiState: kotlinx.coroutines.flow.Flow<DashboardUiState> = combine(
         student,
         lessons,
         addLessonDialogVisibility,
@@ -245,7 +262,17 @@ class DashboardViewModel @Inject constructor(
             lessonToLog = lessonToLog
         )
     }.flowOn(Dispatchers.Default)
-        .stateIn(
+
+val uiState: StateFlow<DashboardUiState> = combine(
+        baseUiState,
+        paymentHistoryDialogVisibility,
+        markAsPaidDialogVisibility
+    ) { base, isPaymentHistoryVisible, isMarkAsPaidVisible ->
+        base.copy(
+            isPaymentHistoryDialogVisible = isPaymentHistoryVisible,
+            isMarkAsPaidDialogVisible = isMarkAsPaidVisible
+        )
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DashboardUiState()
@@ -584,7 +611,7 @@ class DashboardViewModel @Inject constructor(
     suspend fun markCurrentCycleAsPaid() {
         val hasLessonsToMark = lessons.value.any { it.status == LessonStatus.COMPLETED }
         if (!hasLessonsToMark) return
-        lessonRepository.markCompletedLessonsAsPaid(studentId)
+        paymentRepository.markStudentAsPaid(studentId)
     }
 
     private suspend fun completeLesson(lessonId: Int, duration: String, notes: String) {
@@ -619,5 +646,36 @@ class DashboardViewModel @Inject constructor(
     private fun clearLogLessonSelection() {
         logLessonDialogVisibility.value = false
         selectedLessonForLogging.value = null
+    }
+
+fun showPaymentHistoryDialog() {
+        val history = paymentHistory.value
+        if (history.isEmpty()) {
+            _events.tryEmit(DashboardEvent.ShowToast(R.string.no_payment_history_toast))
+        } else {
+            paymentHistoryDialogVisibility.value = true
+        }
+    }
+
+    fun dismissPaymentHistoryDialog() {
+        paymentHistoryDialogVisibility.value = false
+    }
+
+    fun showMarkAsPaidDialog() {
+        markAsPaidDialogVisibility.value = true
+    }
+
+    fun dismissMarkAsPaidDialog() {
+        markAsPaidDialogVisibility.value = false
+    }
+
+    fun confirmMarkAsPaidAndDismiss() {
+        viewModelScope.launch {
+            try {
+                markCurrentCycleAsPaid()
+            } finally {
+                markAsPaidDialogVisibility.value = false
+            }
+        }
     }
 }
