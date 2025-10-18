@@ -11,8 +11,8 @@ import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import com.barutdev.kora.notifications.AlarmScheduler
 import com.barutdev.kora.notifications.LessonReminderType
+import com.barutdev.kora.util.SmartLocaleDefaults
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Currency
 import java.util.Locale
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -41,14 +41,12 @@ class SettingsViewModel @Inject constructor(
         private const val DEFAULT_LOG_REMINDER_HOUR = 20
     }
 
-    private val locale = Locale.getDefault()
-    private val defaultCurrency = runCatching { Currency.getInstance(locale).currencyCode }
-        .getOrDefault("USD")
+    private val smartDefaults = SmartLocaleDefaults.resolveSmartDefaultsFromDevice()
 
     private val defaultPreferences = UserPreferences(
         isDarkMode = false,
-        languageCode = locale.language,
-        currencyCode = defaultCurrency,
+        languageCode = smartDefaults.languageCode,
+        currencyCode = smartDefaults.currencyCode,
         defaultHourlyRate = 0.0,
         lessonRemindersEnabled = false,
         logReminderEnabled = false,

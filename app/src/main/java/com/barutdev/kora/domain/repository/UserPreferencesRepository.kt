@@ -7,6 +7,12 @@ interface UserPreferencesRepository {
 
     val userPreferences: Flow<UserPreferences>
 
+    // First-run helpers
+    suspend fun isFirstRunCompleted(): Boolean
+    suspend fun setFirstRunCompleted()
+    suspend fun getSavedLanguageOrNull(): String?
+    suspend fun getSavedCurrencyOrNull(): String?
+
     suspend fun updateTheme(isDarkMode: Boolean)
 
     suspend fun updateLanguage(languageCode: String)

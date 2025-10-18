@@ -11,11 +11,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.barutdev.kora.domain.model.UserPreferences
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
-import java.util.Currency
-import java.util.Locale
+import com.barutdev.kora.util.SmartLocaleDefaults
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class UserPreferencesRepository @Inject constructor(
@@ -34,6 +34,7 @@ class UserPreferencesRepository @Inject constructor(
         val LESSON_REMINDER_MINUTE_KEY = intPreferencesKey("lesson_reminder_minute")
         val LOG_REMINDER_HOUR_KEY = intPreferencesKey("log_reminder_hour")
         val LOG_REMINDER_MINUTE_KEY = intPreferencesKey("log_reminder_minute")
+        val FIRST_RUN_COMPLETED_KEY = booleanPreferencesKey("first_run_completed")
         const val DEFAULT_LESSON_REMINDER_HOUR = 9
         const val DEFAULT_REMINDER_MINUTE = 0
         const val DEFAULT_LOG_REMINDER_HOUR = 20
@@ -44,13 +45,11 @@ class UserPreferencesRepository @Inject constructor(
             emit(emptyPreferences())
         }
         .map { preferences ->
-            val locale = Locale.getDefault()
-            val defaultCurrency = runCatching { Currency.getInstance(locale).currencyCode }
-                .getOrDefault("USD")
+            val defaults = SmartLocaleDefaults.resolveSmartDefaultsFromDevice()
             UserPreferences(
                 isDarkMode = preferences[DARK_MODE_KEY] ?: false,
-                languageCode = preferences[LANGUAGE_KEY] ?: locale.language,
-                currencyCode = preferences[CURRENCY_KEY] ?: defaultCurrency,
+                languageCode = preferences[LANGUAGE_KEY] ?: defaults.languageCode,
+                currencyCode = preferences[CURRENCY_KEY] ?: defaults.currencyCode,
                 defaultHourlyRate = preferences[DEFAULT_HOURLY_RATE_KEY] ?: 0.0,
                 lessonRemindersEnabled = preferences[LESSON_REMINDERS_ENABLED_KEY] ?: false,
                 logReminderEnabled = preferences[LOG_REMINDER_ENABLED_KEY] ?: false,
@@ -60,6 +59,28 @@ class UserPreferencesRepository @Inject constructor(
                 logReminderMinute = preferences[LOG_REMINDER_MINUTE_KEY] ?: DEFAULT_REMINDER_MINUTE
             )
         }
+
+    // First-run helpers
+    override suspend fun isFirstRunCompleted(): Boolean {
+        val prefs = dataStore.data.first()
+        return prefs[FIRST_RUN_COMPLETED_KEY] ?: false
+    }
+
+    override suspend fun setFirstRunCompleted() {
+        dataStore.edit { preferences ->
+            preferences[FIRST_RUN_COMPLETED_KEY] = true
+        }
+    }
+
+    override suspend fun getSavedLanguageOrNull(): String? {
+        val prefs = dataStore.data.first()
+        return prefs[LANGUAGE_KEY]
+    }
+
+    override suspend fun getSavedCurrencyOrNull(): String? {
+        val prefs = dataStore.data.first()
+        return prefs[CURRENCY_KEY]
+    }
 
     override suspend fun updateTheme(isDarkMode: Boolean) {
         dataStore.edit { preferences ->
