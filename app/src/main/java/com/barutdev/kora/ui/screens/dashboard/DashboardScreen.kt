@@ -43,6 +43,7 @@ import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.domain.model.PaymentRecord
@@ -73,6 +74,7 @@ import kotlinx.coroutines.launch
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import android.content.res.Configuration
+import com.barutdev.kora.util.LocalMessageNotifier
 
 private data class CompletedLessonUiModel(
     val dateText: String,
@@ -101,6 +103,7 @@ val aiInsightsState by viewModel.aiInsightsState.collectAsStateWithLifecycle()
         configuration.setLocale(locale)
         context.createConfigurationContext(configuration)
     }
+    val messageNotifier = LocalMessageNotifier.current
 
     LaunchedEffect(expectedStudentId) {
         Log.d("DashboardScreen", "Composing for expectedStudentId=$expectedStudentId")
@@ -124,12 +127,8 @@ LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 DashboardEvent.StudentRemoved -> onNavigateToStudentList()
-is DashboardEvent.ShowToast -> {
-                    Toast.makeText(
-                        localizedContext,
-                        localizedContext.getString(event.messageRes),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                is DashboardEvent.ShowToast -> {
+                    messageNotifier.showMessage(localizedContext.getString(event.messageRes))
                 }
             }
         }
@@ -253,7 +252,7 @@ private fun DashboardBody(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         val noDebtMessage = koraStringResource(id = R.string.no_debt_to_pay_toast)
-        val context = LocalContext.current
+        val messageNotifier = LocalMessageNotifier.current
         PaymentTrackingCard(
             totalHours = totalHours,
             hourlyRate = hourlyRate,
@@ -263,7 +262,7 @@ private fun DashboardBody(
                 if (totalAmountDue > 0.0) {
                     onMarkCurrentCycleAsPaid()
                 } else {
-                    Toast.makeText(context, noDebtMessage, Toast.LENGTH_SHORT).show()
+                    messageNotifier.showMessage(noDebtMessage)
                 }
             },
             onShowPaymentHistory = onShowPaymentHistory,
@@ -437,7 +436,8 @@ fun PaymentTrackingCard(
                         id = R.string.dashboard_payment_amount_value,
                         amountText
                     ),
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.testTag("PaymentAmountText")
                 )
                 Text(
                     text = koraStringResource(
@@ -456,7 +456,9 @@ fun PaymentTrackingCard(
             )
             Button(
                 onClick = onMarkPaidClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("MarkAsPaidButton")
             ) {
                 Text(text = koraStringResource(id = R.string.dashboard_payment_mark_paid))
             }
@@ -476,6 +478,7 @@ val title = koraStringResource(id = R.string.payment_history_title)
     val empty = koraStringResource(id = R.string.no_payment_history_toast)
     val close = koraStringResource(id = R.string.close_button)
     AlertDialog(
+        modifier = Modifier.testTag("PaymentHistoryDialog"),
         onDismissRequest = onDismiss,
         title = { Text(text = title) },
         text = {
@@ -520,6 +523,7 @@ fun MarkAsPaidConfirmDialog(
     val confirm = koraStringResource(id = R.string.dashboard_mark_paid_confirm)
     val cancel = koraStringResource(id = R.string.dashboard_mark_paid_cancel)
     AlertDialog(
+        modifier = Modifier.testTag("MarkAsPaidConfirmDialog"),
         onDismissRequest = onDismiss,
         title = { Text(text = title) },
         text = { Text(text = message) },

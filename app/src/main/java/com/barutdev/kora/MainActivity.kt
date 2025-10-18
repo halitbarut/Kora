@@ -17,6 +17,7 @@ import com.barutdev.kora.ui.AppViewModel
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.ProvideLocale
+import com.barutdev.kora.util.ProvideMessageNotifier
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.core.content.ContextCompat
 
@@ -39,7 +40,9 @@ class MainActivity : ComponentActivity() {
             ProvideLocale(languageCode = userPreferences.languageCode) {
                 CompositionLocalProvider(LocalUserPreferences provides userPreferences) {
                     KoraTheme(darkTheme = userPreferences.isDarkMode) {
-                        KoraNavGraph()
+                        ProvideMessageNotifier {
+                            KoraNavGraph()
+                        }
                     }
                 }
             }
