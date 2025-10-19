@@ -21,7 +21,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DarkMode
-import androidx.compose.material.icons.outlined.EventNote
+import androidx.compose.material.icons.automirrored.outlined.EventNote
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Language
@@ -30,6 +30,8 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Policy
+import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +63,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barutdev.kora.R
@@ -326,7 +329,7 @@ fun SettingsScreen(
                 )
                 SettingsDivider()
                 SettingSwitchRow(
-                    icon = Icons.Outlined.EventNote,
+                    icon = Icons.AutoMirrored.Outlined.EventNote,
                     iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_content_description),
                     title = koraStringResource(id = R.string.settings_log_reminder_label),
                     checked = userPreferences.logReminderEnabled,
@@ -398,6 +401,33 @@ fun SettingsScreen(
                     value = koraStringResource(id = R.string.settings_reset_action_value),
                     onClick = {
                         showResetConfirmation = true
+                    }
+                )
+            }
+        }
+        item {
+            val uriHandler = LocalUriHandler.current
+
+            SettingsSection(
+                title = koraStringResource(id = R.string.settings_section_about)
+            ) {
+                SettingNavigationRow(
+                    icon = Icons.Outlined.Policy,
+                    iconContentDescription = koraStringResource(id = R.string.settings_privacy_policy_content_description),
+                    title = koraStringResource(id = R.string.settings_privacy_policy_label),
+                    value = "",
+                    onClick = {
+                        uriHandler.openUri("https://gist.github.com/halitbarut/b6b011b0d3cca23bd36781b9465a3cef")
+                    }
+                )
+                SettingsDivider()
+                SettingNavigationRow(
+                    icon = Icons.AutoMirrored.Outlined.Article,
+                    iconContentDescription = koraStringResource(id = R.string.settings_terms_content_description),
+                    title = koraStringResource(id = R.string.settings_terms_label),
+                    value = "",
+                    onClick = {
+                        uriHandler.openUri("https://gist.github.com/halitbarut/5a56f975637a6e815feaea41539854a2")
                     }
                 )
             }
@@ -877,7 +907,7 @@ private fun SettingsPreviewContent(preferences: UserPreferences) {
                     )
                     SettingsDivider()
                     SettingSwitchRow(
-                        icon = Icons.Outlined.EventNote,
+                        icon = Icons.AutoMirrored.Outlined.EventNote,
                         iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_content_description),
                         title = koraStringResource(id = R.string.settings_log_reminder_label),
                         checked = preferences.logReminderEnabled,
