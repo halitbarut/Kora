@@ -92,7 +92,19 @@
     <string name="settings_restore_failure">Backup konnte nicht importiert werden. Bitte überprüfe die Datei und versuche es erneut.</string>
     <string name="settings_reset_success">Alle Daten wurden erfolgreich gelöscht.</string>
     <string name="settings_reset_failure">Daten konnten nicht zurückgesetzt werden. Bitte versuche es erneut.</string>
-    <string name="settings_section_about">Über</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Willkommen</string>
+    <string name="onboarding_welcome_title">Willkommen bei Kora</string>
+    <string name="onboarding_feature1_title">Mühelose Schülerverwaltung</string>
+    <string name="onboarding_feature1_body">Organisiere alle Schüler, Stunden und Notizen an einem Ort.</string>
+    <string name="onboarding_feature2_title">Automatisierte Zahlungsnachverfolgung</string>
+    <string name="onboarding_feature2_body">Berechne Salden automatisch basierend auf deinem Stundensatz und verliere keine Zahlung aus den Augen.</string>
+    <string name="onboarding_feature3_title">KI‑gestützte Einblicke</string>
+    <string name="onboarding_feature3_body">Erhalte smarte, umsetzbare Empfehlungen für deine nächste Stunde basierend auf der Schülerleistung.</string>
+    <string name="onboarding_consent_template">Ich habe die %1$s und die %2$s gelesen und stimme zu.</string>
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_get_started">Los geht’s</string>
     <string name="settings_privacy_policy_label">Datenschutzerklärung</string>
     <string name="settings_privacy_policy_content_description">Datenschutzerklärung anzeigen</string>
     <string name="settings_terms_label">Geschäftsbedingungen</string>

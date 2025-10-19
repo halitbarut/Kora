@@ -13,6 +13,10 @@ interface UserPreferencesRepository {
     suspend fun getSavedLanguageOrNull(): String?
     suspend fun getSavedCurrencyOrNull(): String?
 
+    // Onboarding
+    suspend fun isOnboardingCompleted(): Boolean
+    suspend fun setOnboardingCompleted(completed: Boolean = true)
+
     suspend fun updateTheme(isDarkMode: Boolean)
 
     suspend fun updateLanguage(languageCode: String)

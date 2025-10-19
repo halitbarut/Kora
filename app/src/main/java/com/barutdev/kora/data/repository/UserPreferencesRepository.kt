@@ -35,6 +35,7 @@ class UserPreferencesRepository @Inject constructor(
         val LOG_REMINDER_HOUR_KEY = intPreferencesKey("log_reminder_hour")
         val LOG_REMINDER_MINUTE_KEY = intPreferencesKey("log_reminder_minute")
         val FIRST_RUN_COMPLETED_KEY = booleanPreferencesKey("first_run_completed")
+        val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         const val DEFAULT_LESSON_REMINDER_HOUR = 9
         const val DEFAULT_REMINDER_MINUTE = 0
         const val DEFAULT_LOG_REMINDER_HOUR = 20
@@ -69,6 +70,17 @@ class UserPreferencesRepository @Inject constructor(
     override suspend fun setFirstRunCompleted() {
         dataStore.edit { preferences ->
             preferences[FIRST_RUN_COMPLETED_KEY] = true
+        }
+    }
+
+    override suspend fun isOnboardingCompleted(): Boolean {
+        val prefs = dataStore.data.first()
+        return prefs[ONBOARDING_COMPLETED_KEY] ?: false
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ONBOARDING_COMPLETED_KEY] = completed
         }
     }
 

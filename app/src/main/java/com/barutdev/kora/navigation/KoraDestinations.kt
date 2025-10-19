@@ -53,6 +53,11 @@ internal sealed class KoraDestination(
         labelRes = R.string.settings_title
     )
 
+    object Onboarding : KoraDestination(
+        route = "onboarding",
+        labelRes = R.string.onboarding_title
+    )
+
     companion object {
         val bottomBarDestinations: List<StudentScoped> by lazy(LazyThreadSafetyMode.PUBLICATION) {
             listOf(Dashboard, Calendar, Homework)
@@ -64,6 +69,7 @@ internal sealed class KoraDestination(
             Calendar.route -> Calendar
             Homework.route -> Homework
             Settings.route -> Settings
+            Onboarding.route -> Onboarding
             else -> null
         }
 
