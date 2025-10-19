@@ -16,6 +16,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Assignment
@@ -28,6 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -35,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.derivedStateOf
@@ -62,6 +66,7 @@ import com.barutdev.kora.ui.screens.calendar.CalendarScreen
 import com.barutdev.kora.ui.screens.dashboard.DashboardScreen
 import com.barutdev.kora.ui.screens.homework.HomeworkScreen
 import com.barutdev.kora.ui.screens.settings.SettingsScreen
+import com.barutdev.kora.ui.screens.onboarding.OnboardingScreen
 import com.barutdev.kora.ui.screens.student_list.StudentListScreen
 import com.barutdev.kora.util.koraStringResource
 import java.util.Locale
@@ -77,6 +82,8 @@ fun KoraNavGraph(
     navController: NavHostController = rememberNavController(),
     scaffoldController: KoraScaffoldController = rememberKoraScaffoldController()
 ) {
+    val startDestinationViewModel: StartDestinationViewModel = hiltViewModel()
+    val startRoute: String? by startDestinationViewModel.startRoute.collectAsState(initial = null)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentStudentId = navBackStackEntry.studentIdOrNull()
@@ -226,10 +233,18 @@ fun KoraNavGraph(
             },
             snackbarHost = { SnackbarHost(hostState = scaffoldController.snackbarHostState) }
         ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = KoraDestination.StudentList.route,
-                modifier = Modifier.padding(innerPadding),
+            if (startRoute == null) {
+                Box(
+                    modifier = Modifier.padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                NavHost(
+                    navController = navController,
+                    startDestination = startRoute!!,
+                    modifier = Modifier.padding(innerPadding),
                 enterTransition = {
                     if (bottomNavTransitionState.shouldAnimate(
                             initialState.destination,
@@ -295,6 +310,19 @@ fun KoraNavGraph(
                     }
                 }
             ) {
+                composable(
+                    route = KoraDestination.Onboarding.route
+                ) {
+                    OnboardingScreen(
+                        onCompleted = {
+                            navController.navigate(KoraDestination.StudentList.route) {
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
+
                 composable(
                     route = KoraDestination.StudentList.route
                 ) {
@@ -399,6 +427,7 @@ fun KoraNavGraph(
             }
         }
     }
+}
 }
 
 private data class KoraTopBarState(

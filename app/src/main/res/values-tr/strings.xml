@@ -207,4 +207,17 @@
     <string name="dashboard_mark_paid_confirm_message">Mevcut dönem için bir ödeme kaydı oluşturulacak ve tamamlanan dersler temizlenecek. Devam edilsin mi?</string>
     <string name="dashboard_mark_paid_confirm">Onayla</string>
     <string name="dashboard_mark_paid_cancel">İptal</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Hoş Geldiniz</string>
+    <string name="onboarding_welcome_title">Kora’ya Hoş Geldiniz</string>
+    <string name="onboarding_feature1_title">Kolay Öğrenci Yönetimi</string>
+    <string name="onboarding_feature1_body">Tüm öğrencilerinizi, derslerinizi ve notlarınızı tek bir yerde düzenleyin.</string>
+    <string name="onboarding_feature2_title">Otomatik Ödeme Takibi</string>
+    <string name="onboarding_feature2_body">Saatlik ücretinize göre bakiyeleri otomatik hesaplayın ve ödemeleri asla kaçırmayın.</string>
+    <string name="onboarding_feature3_title">Yapay Zeka Destekli İçgörüler</string>
+    <string name="onboarding_feature3_body">Öğrenci performansına göre bir sonraki dersiniz için akıllı, uygulanabilir öneriler alın.</string>
+    <string name="onboarding_consent_template">%1$s ve %2$s’ı okudum ve kabul ediyorum.</string>
+    <string name="onboarding_next">İleri</string>
+    <string name="onboarding_get_started">Başla</string>
 </resources>

@@ -208,4 +208,17 @@
     <string name="dashboard_mark_paid_confirm">Confirm</string>
     <string name="dashboard_mark_paid_cancel">Cancel</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome</string>
+    <string name="onboarding_welcome_title">Welcome to Kora</string>
+    <string name="onboarding_feature1_title">Effortless Student Management</string>
+    <string name="onboarding_feature1_body">Organize all your students, lessons, and notes in one convenient place.</string>
+    <string name="onboarding_feature2_title">Automated Payment Tracking</string>
+    <string name="onboarding_feature2_body">Automatically calculate balances based on your hourly rate and never lose track of a payment.</string>
+    <string name="onboarding_feature3_title">AI-Powered Insights</string>
+    <string name="onboarding_feature3_body">Get smart, actionable recommendations for your next session based on student performance.</string>
+    <string name="onboarding_consent_template">I have read and agree to the %1$s and %2$s.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get Started</string>
+
 </resources>
