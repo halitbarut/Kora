@@ -27,8 +27,8 @@
     <string name="homework_dialog_edit_title">Ödevi Düzenle</string>
     <string name="homework_dialog_title_label">Başlık</string>
     <string name="homework_dialog_description_label">Açıklama</string>
-    <string name="homework_dialog_due_date_label">Teslim Tarihi (YYYY–MM–DD)</string>
-    <string name="homework_dialog_due_date_hint">Örnek: 2024–04–15</string>
+    <string name="homework_dialog_due_date_label">Teslim Tarihi</string>
+    <string name="homework_dialog_due_date_hint">Örnek: 2024-04-15</string>
     <string name="homework_dialog_due_date_error">Geçerli bir teslim tarihi girin.</string>
     <string name="homework_dialog_status_label">Durum</string>
     <string name="homework_dialog_performance_notes_label">Performans Notları</string>
@@ -175,6 +175,7 @@
     <string name="add_student_dialog_full_name">Tam Ad</string>
     <string name="add_student_dialog_hourly_rate">Saatlik Ücret</string>
     <string name="dialog_action_cancel">İptal</string>
+    <string name="dialog_action_ok">Tamam</string>
     <string name="dialog_action_save">Kaydet</string>
     <string name="add_student_dialog_save">Kaydet</string>
     <string name="add_student_dialog_cancel">İptal</string>

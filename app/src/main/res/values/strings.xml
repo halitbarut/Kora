@@ -27,8 +27,8 @@
     <string name="homework_dialog_edit_title">Edit Homework</string>
     <string name="homework_dialog_title_label">Title</string>
     <string name="homework_dialog_description_label">Description</string>
-    <string name="homework_dialog_due_date_label">Due Date (YYYY–MM–DD)</string>
-    <string name="homework_dialog_due_date_hint">Example: 2024–04–15</string>
+    <string name="homework_dialog_due_date_label">Due Date</string>
+    <string name="homework_dialog_due_date_hint">Example: 2024-04-15</string>
     <string name="homework_dialog_due_date_error">Enter a valid due date.</string>
     <string name="homework_dialog_status_label">Status</string>
     <string name="homework_dialog_performance_notes_label">Performance Notes</string>
@@ -175,6 +175,7 @@
     <string name="add_student_dialog_full_name">Full Name</string>
     <string name="add_student_dialog_hourly_rate">Hourly Rate</string>
     <string name="dialog_action_cancel">Cancel</string>
+    <string name="dialog_action_ok">OK</string>
     <string name="dialog_action_save">Save</string>
     <string name="add_student_dialog_save">Save</string>
     <string name="add_student_dialog_cancel">Cancel</string>

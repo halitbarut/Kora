@@ -107,6 +107,7 @@
     <string name="onboarding_get_started">Los geht’s</string>
     <string name="onboarding_legal_title">Ein letzter Schritt</string>
     <string name="onboarding_legal_body">Bitte überprüfe und akzeptiere unsere Richtlinien, um fortzufahren.</string>
+    <string name="settings_section_about">Über</string>
     <string name="settings_privacy_policy_label">Datenschutzerklärung</string>
     <string name="settings_privacy_policy_content_description">Datenschutzerklärung anzeigen</string>
     <string name="settings_terms_label">Geschäftsbedingungen</string>
@@ -189,6 +190,7 @@
     <string name="add_student_dialog_full_name">Vollständiger Name</string>
     <string name="add_student_dialog_hourly_rate">Stundensatz</string>
     <string name="dialog_action_cancel">Abbrechen</string>
+    <string name="dialog_action_ok">OK</string>
     <string name="dialog_action_save">Speichern</string>
     <string name="add_student_dialog_save">Speichern</string>
     <string name="add_student_dialog_cancel">Abbrechen</string>
