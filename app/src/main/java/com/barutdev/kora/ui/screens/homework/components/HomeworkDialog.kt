@@ -3,15 +3,24 @@ package com.barutdev.kora.ui.screens.homework.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +37,6 @@ import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.HomeworkStatus
 import com.barutdev.kora.ui.theme.LocalLocale
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -45,7 +53,6 @@ fun HomeworkDialog(
 
     val locale = LocalLocale.current
     val zoneId = remember { ZoneId.systemDefault() }
-    val inputFormatter = remember(locale) { DateTimeFormatter.ISO_LOCAL_DATE.withLocale(locale) }
     val previewFormatter = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
 
     val editingId = editingHomework?.id
@@ -56,15 +63,8 @@ fun HomeworkDialog(
     var description by rememberSaveable(editingId) {
         mutableStateOf(editingHomework?.description.orEmpty())
     }
-    var dueDateText by rememberSaveable(editingId) {
-        mutableStateOf(
-            editingHomework?.let { homework ->
-                Instant.ofEpochMilli(homework.dueDate)
-                    .atZone(zoneId)
-                    .toLocalDate()
-                    .format(inputFormatter)
-            }.orEmpty()
-        )
+    var selectedDueDateMillis by rememberSaveable(editingId) {
+        mutableStateOf(editingHomework?.dueDate)
     }
     var status by rememberSaveable(editingId) {
         mutableStateOf(editingHomework?.status ?: HomeworkStatus.PENDING)
@@ -72,10 +72,8 @@ fun HomeworkDialog(
     var performanceNotes by rememberSaveable(editingId) {
         mutableStateOf(editingHomework?.performanceNotes.orEmpty())
     }
-    var dueDateError by rememberSaveable(editingId) {
-        mutableStateOf(false)
-    }
     var isStatusMenuExpanded by remember { mutableStateOf(false) }
+    var showDatePickerDialog by rememberSaveable { mutableStateOf(false) }
 
     val isEditing = editingHomework != null
     val confirmLabel = if (isEditing) {
@@ -89,7 +87,7 @@ fun HomeworkDialog(
         koraStringResource(id = R.string.homework_dialog_add_title)
     }
 
-    val isConfirmEnabled = title.isNotBlank() && dueDateText.isNotBlank()
+    val isConfirmEnabled = title.isNotBlank() && selectedDueDateMillis != null
 
     AlertDialog(
         onDismissRequest = {
@@ -121,20 +119,29 @@ fun HomeworkDialog(
                     minLines = 2,
                     maxLines = 4
                 )
-                TextField(
+                // Read-only clickable date field that opens DatePickerDialog
+                val dueDateText = selectedDueDateMillis?.let { millis ->
+                    Instant.ofEpochMilli(millis)
+                        .atZone(zoneId)
+                        .toLocalDate()
+                        .format(DateTimeFormatter.ISO_LOCAL_DATE)
+                }.orEmpty()
+                OutlinedTextField(
                     value = dueDateText,
-                    onValueChange = { newValue ->
-                        dueDateText = newValue
-                        dueDateError = false
-                    },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { /* read-only */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePickerDialog = true },
                     label = { Text(text = koraStringResource(id = R.string.homework_dialog_due_date_label)) },
                     placeholder = { Text(text = koraStringResource(id = R.string.homework_dialog_due_date_hint)) },
                     singleLine = true,
-                    isError = dueDateError,
-                    supportingText = {
-                        if (dueDateError) {
-                            Text(text = koraStringResource(id = R.string.homework_dialog_due_date_error))
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePickerDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.DateRange,
+                                contentDescription = koraStringResource(id = R.string.homework_dialog_due_date_label)
+                            )
                         }
                     }
                 )
@@ -180,27 +187,19 @@ fun HomeworkDialog(
                     minLines = 2,
                     maxLines = 4
                 )
-                if (dueDateText.isNotBlank() && !dueDateError) {
-                    runCatching {
-                        LocalDate.parse(dueDateText.trim(), inputFormatter)
-                    }.onSuccess { parsedDate ->
-                        val readable = parsedDate.format(previewFormatter)
-                        Text(text = koraStringResource(id = R.string.homework_due_date_label, readable))
-                    }
+                selectedDueDateMillis?.let { millis ->
+                    val readable = Instant.ofEpochMilli(millis)
+                        .atZone(zoneId)
+                        .toLocalDate()
+                        .format(previewFormatter)
+                    Text(text = koraStringResource(id = R.string.homework_due_date_label, readable))
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val parsedDate = runCatching {
-                        LocalDate.parse(dueDateText.trim(), inputFormatter)
-                    }.getOrNull()
-                    if (parsedDate == null) {
-                        dueDateError = true
-                        return@Button
-                    }
-                    val dueDateMillis = parsedDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
+                    val dueDateMillis = selectedDueDateMillis ?: return@Button
                     onConfirm(
                         title,
                         description,
@@ -224,6 +223,36 @@ fun HomeworkDialog(
             }
         }
     )
+
+    if (showDatePickerDialog) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDueDateMillis
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerDialog = false },
+            confirmButton = {
+                TextButton(
+                    enabled = datePickerState.selectedDateMillis != null,
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDueDateMillis = millis
+                            showDatePickerDialog = false
+                        }
+                    }
+                ) {
+                    Text(text = koraStringResource(id = R.string.dialog_action_ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerDialog = false }) {
+                    Text(text = koraStringResource(id = R.string.dialog_action_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
 
 private fun statusLabelRes(status: HomeworkStatus): Int = when (status) {
