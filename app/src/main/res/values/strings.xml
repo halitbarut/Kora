@@ -220,5 +220,7 @@
     <string name="onboarding_consent_template">I have read and agree to the %1$s and %2$s.</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_legal_title">One Last Step</string>
+    <string name="onboarding_legal_body">Please review and accept our policies to continue.</string>
 
 </resources>

@@ -220,4 +220,6 @@
     <string name="onboarding_consent_template">%1$s ve %2$s’ı okudum ve kabul ediyorum.</string>
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_get_started">Başla</string>
+    <string name="onboarding_legal_title">Son bir adım</string>
+    <string name="onboarding_legal_body">Devam etmek için politikalarımızı inceleyip kabul edin.</string>
 </resources>
