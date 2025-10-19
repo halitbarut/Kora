@@ -14,7 +14,7 @@
     <string name="dashboard_title">Dashboard</string>
     <string name="calendar_title">Kalender</string>
     <string name="homework_title">Hausaufgaben</string>
-    <string name="homework_top_bar_title">%1$s - %2$s</string>
+    <string name="homework_top_bar_title">%1$s – %2$s</string>
     <string name="homework_ai_card_title">KI-Hausaufgaben-Einblicke</string>
     <string name="homework_ai_card_body">Die Hausaufgabenleistung von %1$s zeigt einen Aufwärtstrend. Konzentriere dich auf anspruchsvollere Aufgaben, um das Momentum zu halten.</string>
     <string name="homework_assignments_section_title">Alle Aufgaben</string>
@@ -27,8 +27,8 @@
     <string name="homework_dialog_edit_title">Hausaufgabe bearbeiten</string>
     <string name="homework_dialog_title_label">Titel</string>
     <string name="homework_dialog_description_label">Beschreibung</string>
-    <string name="homework_dialog_due_date_label">Fälligkeitsdatum (JJJJ-MM-TT)</string>
-    <string name="homework_dialog_due_date_hint">Beispiel: 2024-04-15</string>
+    <string name="homework_dialog_due_date_label">Fälligkeitsdatum (JJJJ–MM–TT)</string>
+    <string name="homework_dialog_due_date_hint">Beispiel: 2024–04–15</string>
     <string name="homework_dialog_due_date_error">Gib ein gültiges Fälligkeitsdatum ein.</string>
     <string name="homework_dialog_status_label">Status</string>
     <string name="homework_dialog_performance_notes_label">Leistungsnotizen</string>
@@ -92,6 +92,11 @@
     <string name="settings_restore_failure">Backup konnte nicht importiert werden. Bitte überprüfe die Datei und versuche es erneut.</string>
     <string name="settings_reset_success">Alle Daten wurden erfolgreich gelöscht.</string>
     <string name="settings_reset_failure">Daten konnten nicht zurückgesetzt werden. Bitte versuche es erneut.</string>
+    <string name="settings_section_about">Über</string>
+    <string name="settings_privacy_policy_label">Datenschutzerklärung</string>
+    <string name="settings_privacy_policy_content_description">Datenschutzerklärung anzeigen</string>
+    <string name="settings_terms_label">Geschäftsbedingungen</string>
+    <string name="settings_terms_content_description">Geschäftsbedingungen anzeigen</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_student_name">Elif Yılmaz</string>
@@ -122,7 +127,7 @@
     <string name="dashboard_log_lesson_mark_not_done_button">Als nicht stattgefunden markieren</string>
     <string name="dashboard_ai_insights_title">KI-Assistent-Einblicke</string>
     <string name="dashboard_ai_insights_body">Elifs Leistung in "Algebra" hat sich deutlich verbessert. Die jüngsten Hausaufgabenergebnisse in "Geometrie" weisen jedoch auf Nachholbedarf hin. Plane für die nächste Stunde ein Arbeitsblatt mit Fokus auf Dreiecke.</string>
-    <string name="ai_loading_message">Personalisierte Einblicke werden erstellt...</string>
+    <string name="ai_loading_message">Personalisierte Einblicke werden erstellt…</string>
     <string name="ai_retry_action">Erneut versuchen</string>
     <string name="ai_generate_again_action">Erneut generieren</string>
     <string name="ai_missing_api_key_message">Füge deinen Gemini-API-Schlüssel in der local.properties hinzu, um KI-Einblicke zu aktivieren.</string>
@@ -148,7 +153,7 @@
     <string name="calendar_previous_month_content_description">Vorheriger Monat</string>
     <string name="calendar_next_month_content_description">Nächster Monat</string>
     <string name="calendar_add_lesson_fab_content_description">Stunde hinzufügen</string>
-    <string name="calendar_top_bar_title">%1$s - %2$s</string>
+    <string name="calendar_top_bar_title">%1$s – %2$s</string>
     <string name="calendar_select_day_message">Bitte zuerst einen Tag auswählen</string>
     <string name="calendar_lesson_scheduled_message">Stunde geplant</string>
     <string name="calendar_day_details_title">Stunden am %1$s</string>
@@ -185,11 +190,17 @@
     <string name="delete_student_confirmation_keep">Schüler behalten</string>
     <string name="dialog_action_delete">Löschen</string>
     
+    <!-- Payment History Dialog -->
+    <string name="dashboard_payment_history_title">Zahlungsverlauf</string>
+    <string name="dashboard_payment_history_icon_description">Zahlungsverlauf anzeigen</string>
+    <string name="dashboard_payment_history_empty">Noch keine Zahlungen</string>
+    <string name="dashboard_payment_history_close">Schließen</string>
+
     <!-- Payment History (generic, i18n) -->
     <string name="payment_history_title">Zahlungsverlauf</string>
     <string name="close_button">Schließen</string>
     <string name="no_payment_history_toast">Kein Zahlungsverlauf gefunden.</string>
-+    <string name="no_debt_to_pay_toast">Es sind keine Schulden offen.</string>
+    <string name="no_debt_to_pay_toast">Es sind keine Schulden offen.</string>
 
     <!-- Mark as Paid Confirmation Dialog -->
     <string name="dashboard_mark_paid_confirm_title">Zahlung bestätigen</string>
