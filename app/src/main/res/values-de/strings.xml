@@ -105,6 +105,8 @@
     <string name="onboarding_consent_template">Ich habe die %1$s und die %2$s gelesen und stimme zu.</string>
     <string name="onboarding_next">Weiter</string>
     <string name="onboarding_get_started">Los geht’s</string>
+    <string name="onboarding_legal_title">Ein letzter Schritt</string>
+    <string name="onboarding_legal_body">Bitte überprüfe und akzeptiere unsere Richtlinien, um fortzufahren.</string>
     <string name="settings_privacy_policy_label">Datenschutzerklärung</string>
     <string name="settings_privacy_policy_content_description">Datenschutzerklärung anzeigen</string>
     <string name="settings_terms_label">Geschäftsbedingungen</string>
