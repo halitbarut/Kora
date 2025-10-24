@@ -10,7 +10,7 @@ import com.barutdev.kora.data.local.entity.StudentEntity
 
 @Database(
     entities = [StudentEntity::class, LessonEntity::class, HomeworkEntity::class, AiInsightEntity::class, com.barutdev.kora.data.local.entity.PaymentRecordEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(LessonStatusConverter::class, HomeworkStatusConverter::class)

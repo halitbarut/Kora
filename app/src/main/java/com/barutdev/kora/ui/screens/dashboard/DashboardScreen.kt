@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Button
@@ -46,10 +47,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.barutdev.kora.domain.model.PaymentRecord
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
+import com.barutdev.kora.domain.model.PaymentRecord
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
 import com.barutdev.kora.ui.navigation.TopBarAction
@@ -82,10 +83,12 @@ private data class CompletedLessonUiModel(
     val notes: String?
 )
 
+
 @Composable
 fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToStudentList: () -> Unit,
+    onEditStudentProfile: (Int) -> Unit,
     expectedStudentId: Int? = null,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(
@@ -149,13 +152,34 @@ LaunchedEffect(viewModel) {
         id = R.string.top_bar_navigate_to_student_list_content_description
     )
     val settingsDescription = koraStringResource(id = R.string.dashboard_settings_icon_description)
+    val editDescription = koraStringResource(id = R.string.dashboard_edit_student_content_description)
+
+    val topBarActions = remember(
+        uiState.studentId,
+        editDescription,
+        settingsDescription,
+        onNavigateToSettings,
+        onEditStudentProfile
+    ) {
+        val editAction = uiState.studentId?.let { id ->
+            TopBarAction(
+                icon = Icons.Outlined.Edit,
+                contentDescription = editDescription,
+                onClick = { onEditStudentProfile(id) }
+            )
+        }
+        listOfNotNull(editAction) + TopBarAction(
+            icon = Icons.Filled.Settings,
+            contentDescription = settingsDescription,
+            onClick = onNavigateToSettings
+        )
+    }
 
     val topBarConfig = remember(
         topBarTitle,
         navigateToListDescription,
-        settingsDescription,
-        onNavigateToStudentList,
-        onNavigateToSettings
+        topBarActions,
+        onNavigateToStudentList
     ) {
         TopBarConfig(
             title = topBarTitle,
@@ -164,13 +188,7 @@ LaunchedEffect(viewModel) {
                 contentDescription = navigateToListDescription,
                 onClick = onNavigateToStudentList
             ),
-            actions = listOf(
-                TopBarAction(
-                    icon = Icons.Filled.Settings,
-                    contentDescription = settingsDescription,
-                    onClick = onNavigateToSettings
-                )
-            )
+            actions = topBarActions
         )
     }
     ScreenScaffoldConfig(topBarConfig = topBarConfig)

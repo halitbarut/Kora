@@ -1,11 +1,13 @@
 package com.barutdev.kora.ui.screens.homework
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.barutdev.kora.MainDispatcherRule
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.HomeworkStatus
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.StudentProfileUpdate
 import com.barutdev.kora.domain.model.ai.AiInsightsFocus
 import com.barutdev.kora.domain.model.ai.AiInsightsRequestKey
 import com.barutdev.kora.domain.model.ai.CachedAiInsight
@@ -17,8 +19,9 @@ import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -36,7 +39,7 @@ class HomeworkViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun switchingStudentId_invalidatesPreviousStudentData() = runTest {
+    fun switchingStudentId_invalidatesPreviousStudentData() = runTest(mainDispatcherRule.dispatcher) {
         val studentRepository = FakeStudentRepository().apply {
             setStudent(student(id = 1, name = "Ahmet"))
             setStudent(student(id = 2, name = "Mehmet"))
@@ -73,32 +76,39 @@ class HomeworkViewModelTest {
             aiInsightsGenerationTracker = generationTracker,
             generateAiInsightsUseCase = aiUseCase
         )
+        val viewModelJob = viewModel.viewModelScope.coroutineContext[Job]
 
-        advanceUntilIdle()
+        try {
+            advanceUntilIdle()
 
-        val initialName = viewModel.studentName.first { it == "Ahmet" }
-        assertEquals("Ahmet", initialName)
-        assertEquals(1, viewModel.studentId)
-        val initialHomework = viewModel.homework.first { items ->
-            items.isNotEmpty() && items.all { it.studentId == 1 }
+            val initialName = viewModel.studentName.first { it == "Ahmet" }
+            assertEquals("Ahmet", initialName)
+            assertEquals(1, viewModel.studentId)
+            val initialHomework = viewModel.homework.first { items ->
+                items.isNotEmpty() && items.all { it.studentId == 1 }
+            }
+            assertEquals(1, initialHomework.single().studentId)
+
+            savedStateHandle[STUDENT_ID_ARG] = 2
+            advanceUntilIdle()
+
+            val updatedName = viewModel.studentName.first { it == "Mehmet" }
+            assertEquals("Mehmet", updatedName)
+            assertEquals(2, viewModel.studentId)
+            val updatedHomework = viewModel.homework.first { items ->
+                items.isNotEmpty() && items.all { it.studentId == 2 }
+            }
+            assertEquals(2, updatedHomework.single().studentId)
+            assertNotEquals(
+                "Homework list should be replaced when student changes",
+                initialHomework,
+                updatedHomework
+            )
+        } finally {
+            viewModelJob?.cancel()
         }
-        assertEquals(1, initialHomework.single().studentId)
-
-        savedStateHandle[STUDENT_ID_ARG] = 2
+        viewModelJob?.join()
         advanceUntilIdle()
-
-        val updatedName = viewModel.studentName.first { it == "Mehmet" }
-        assertEquals("Mehmet", updatedName)
-        assertEquals(2, viewModel.studentId)
-        val updatedHomework = viewModel.homework.first { items ->
-            items.isNotEmpty() && items.all { it.studentId == 2 }
-        }
-        assertEquals(2, updatedHomework.single().studentId)
-        assertNotEquals(
-            "Homework list should be replaced when student changes",
-            initialHomework,
-            updatedHomework
-        )
     }
 
     private fun student(id: Int, name: String) = Student(
@@ -136,8 +146,10 @@ private class FakeStudentRepository : StudentRepository {
 
     override suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double) = error("Not needed")
 
-    override suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double) =
+    override suspend fun updateStudentProfile(update: StudentProfileUpdate) =
         error("Not needed")
+
+    override suspend fun deleteStudent(studentId: Int) = error("Not needed")
 }
 
 private class FakeHomeworkRepository : HomeworkRepository {

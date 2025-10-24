@@ -89,7 +89,7 @@ fun AddLessonDialog(
                 },
                 enabled = isSaveEnabled
             ) {
-                Text(text = koraStringResource(id = R.string.add_student_dialog_save))
+                Text(text = koraStringResource(id = R.string.dialog_action_save))
             }
         },
         dismissButton = {
@@ -100,7 +100,7 @@ fun AddLessonDialog(
                     onDismiss()
                 }
             ) {
-                Text(text = koraStringResource(id = R.string.add_student_dialog_cancel))
+                Text(text = koraStringResource(id = R.string.dialog_action_cancel))
             }
         }
     )

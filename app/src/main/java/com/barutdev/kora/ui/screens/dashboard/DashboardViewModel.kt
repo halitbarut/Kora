@@ -22,6 +22,7 @@ import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.PaymentRepository
+import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
 import com.barutdev.kora.notifications.AlarmScheduler
@@ -72,6 +73,18 @@ sealed interface DashboardEvent {
     data class ShowToast(val messageRes: Int) : DashboardEvent
 }
 
+private data class DashboardComputation(
+    val student: Student?,
+    val completedLessons: List<Lesson>,
+    val upcomingLessons: List<Lesson>,
+    val pastLessonsToLog: List<Lesson>,
+    val totalHours: Double,
+    val lastPaymentDate: Long?,
+    val isAddLessonDialogVisible: Boolean,
+    val isLogLessonDialogVisible: Boolean,
+    val lessonToLog: Lesson?
+)
+
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -82,7 +95,8 @@ class DashboardViewModel @Inject constructor(
     private val aiInsightsGenerationTracker: AiInsightsGenerationTracker,
     private val alarmScheduler: AlarmScheduler,
     private val generateAiInsightsUseCase: GenerateAiInsightsUseCase,
-    private val paymentRepository: PaymentRepository
+    private val paymentRepository: PaymentRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val studentId: Int = checkNotNull(
@@ -113,7 +127,7 @@ class DashboardViewModel @Inject constructor(
     private val logLessonDialogVisibility = MutableStateFlow(false)
     private val selectedLessonForLogging = MutableStateFlow<Lesson?>(null)
 
-private val paymentHistoryDialogVisibility = MutableStateFlow(false)
+    private val paymentHistoryDialogVisibility = MutableStateFlow(false)
     private val markAsPaidDialogVisibility = MutableStateFlow(false)
 
     val student: StateFlow<Student?> = studentRepository.getStudentById(studentId)
@@ -217,7 +231,10 @@ private val paymentHistoryDialogVisibility = MutableStateFlow(false)
         }
     }
 
-private val baseUiState: kotlinx.coroutines.flow.Flow<DashboardUiState> = combine(
+    private val defaultHourlyRateFlow = userPreferencesRepository.userPreferences
+        .map { preferences -> preferences.defaultHourlyRate }
+
+    private val dashboardComputation: kotlinx.coroutines.flow.Flow<DashboardComputation> = combine(
         student,
         lessons,
         addLessonDialogVisibility,
@@ -246,24 +263,42 @@ private val baseUiState: kotlinx.coroutines.flow.Flow<DashboardUiState> = combin
             }
             .sortedByDescending { it.date }
         val totalHours = completedLessons.mapNotNull { it.durationInHours }.sum()
-        val hourlyRate = student?.hourlyRate ?: 0.0
-        DashboardUiState(
-            studentId = student?.id,
-            studentName = student?.fullName.orEmpty(),
-            hourlyRate = hourlyRate,
-            totalHours = totalHours,
-            totalAmountDue = totalHours * hourlyRate,
-            completedLessonsAwaitingPayment = completedLessons,
-            lastPaymentDate = student?.lastPaymentDate,
-            isAddLessonDialogVisible = isAddLessonDialogVisible,
+        DashboardComputation(
+            student = student,
+            completedLessons = completedLessons,
             upcomingLessons = upcomingLessons,
             pastLessonsToLog = pastLessonsToLog,
+            totalHours = totalHours,
+            lastPaymentDate = student?.lastPaymentDate,
+            isAddLessonDialogVisible = isAddLessonDialogVisible,
             isLogLessonDialogVisible = isLogDialogVisible,
             lessonToLog = lessonToLog
         )
     }.flowOn(Dispatchers.Default)
 
-val uiState: StateFlow<DashboardUiState> = combine(
+    private val baseUiState: kotlinx.coroutines.flow.Flow<DashboardUiState> = combine(
+        dashboardComputation,
+        defaultHourlyRateFlow
+    ) { computation, defaultHourlyRate ->
+        val student = computation.student
+        val hourlyRate = student?.customHourlyRate ?: defaultHourlyRate
+        DashboardUiState(
+            studentId = student?.id,
+            studentName = student?.fullName.orEmpty(),
+            hourlyRate = hourlyRate,
+            totalHours = computation.totalHours,
+            totalAmountDue = computation.totalHours * hourlyRate,
+            completedLessonsAwaitingPayment = computation.completedLessons,
+            lastPaymentDate = computation.lastPaymentDate,
+            isAddLessonDialogVisible = computation.isAddLessonDialogVisible,
+            upcomingLessons = computation.upcomingLessons,
+            pastLessonsToLog = computation.pastLessonsToLog,
+            isLogLessonDialogVisible = computation.isLogLessonDialogVisible,
+            lessonToLog = computation.lessonToLog
+        )
+    }.flowOn(Dispatchers.Default)
+
+    val uiState: StateFlow<DashboardUiState> = combine(
         baseUiState,
         paymentHistoryDialogVisibility,
         markAsPaidDialogVisibility

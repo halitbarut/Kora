@@ -23,11 +23,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,8 +39,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.barutdev.kora.util.koraStringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,23 +53,20 @@ import com.barutdev.kora.ui.navigation.FabConfig
 import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
 import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
-import com.barutdev.kora.ui.screens.student_list.components.AddStudentDialog
-import com.barutdev.kora.ui.screens.student_list.components.StudentEditDialog
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.util.formatCurrency
+import com.barutdev.kora.util.koraStringResource
 import java.util.Locale
 
 @Composable
 fun StudentListScreen(
     onAddStudent: () -> Unit,
     onStudentClick: (String) -> Unit,
+    onEditStudentProfile: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: StudentListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val showDialog by viewModel.showAddStudentDialog.collectAsStateWithLifecycle()
-    val isEditDialogVisible by viewModel.isEditStudentDialogVisible.collectAsStateWithLifecycle()
-    val studentToEdit by viewModel.studentToEdit.collectAsStateWithLifecycle()
     val userPreferences = LocalUserPreferences.current
 
     val topBarTitle = koraStringResource(id = R.string.student_list_title)
@@ -79,14 +81,12 @@ fun StudentListScreen(
         addStudentDescription,
         containerColor,
         contentColor,
-        onAddStudent,
-        viewModel
+        onAddStudent
     ) {
         FabConfig(
             icon = Icons.Filled.Add,
             contentDescription = addStudentDescription,
             onClick = {
-                viewModel.onAddStudentClick()
                 onAddStudent()
             },
             containerColor = containerColor,
@@ -100,25 +100,15 @@ fun StudentListScreen(
 
     StudentListScreenContent(
         students = uiState.students,
+        searchQuery = uiState.searchQuery,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
+        onClearSearch = viewModel::onClearSearchQuery,
         onStudentClick = onStudentClick,
-        onEditStudent = viewModel::onEditStudentClicked,
+        onEditStudent = { student -> onEditStudentProfile(student.id) },
         currencyCode = userPreferences.currencyCode,
+        isSearchActive = uiState.isSearchActive,
+        hasAnyStudents = uiState.hasAnyStudents,
         modifier = modifier.fillMaxSize()
-    )
-
-    AddStudentDialog(
-        showDialog = showDialog,
-        onDismiss = viewModel::onAddStudentDismiss,
-        onSave = viewModel::onSaveStudent,
-        initialHourlyRate = uiState.defaultHourlyRate
-    )
-
-    StudentEditDialog(
-        showDialog = isEditDialogVisible,
-        student = studentToEdit,
-        onDismiss = viewModel::onEditStudentDismiss,
-        onSave = viewModel::onUpdateStudent,
-        onDelete = viewModel::onDeleteStudent
     )
 }
 
@@ -126,23 +116,47 @@ fun StudentListScreen(
 @Composable
 private fun StudentListScreenContent(
     students: List<StudentWithDebt>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
     onStudentClick: (String) -> Unit,
     onEditStudent: (Student) -> Unit,
     currencyCode: String,
+    isSearchActive: Boolean,
+    hasAnyStudents: Boolean,
     modifier: Modifier = Modifier
 ) {
-    if (students.isEmpty()) {
+    if (!hasAnyStudents) {
         StudentListEmptyState(
             modifier = modifier.fillMaxSize()
         )
-    } else {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
+        return
+    }
+
+    val showNoResults = isSearchActive && students.isEmpty()
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        item {
+            StudentListSearchField(
+                query = searchQuery,
+                onQueryChange = onSearchQueryChange,
+                onClearQuery = onClearSearch,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (showNoResults) {
+            item {
+                StudentListNoResultsState(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp, bottom = 16.dp)
+                )
+            }
+        } else {
             items(
                 items = students,
                 key = { it.student.id }
@@ -156,6 +170,60 @@ private fun StudentListScreenContent(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun StudentListSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClearQuery: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val placeholder = koraStringResource(id = R.string.student_list_search_placeholder)
+    val clearContentDescription = koraStringResource(id = R.string.student_list_search_clear_content_description)
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier.testTag("StudentListSearchField"),
+        placeholder = { Text(text = placeholder) },
+        leadingIcon = {
+            Icon(imageVector = Icons.Outlined.Search, contentDescription = null)
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = onClearQuery) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = clearContentDescription
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search)
+    )
+}
+
+@Composable
+private fun StudentListNoResultsState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Search,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.size(96.dp)
+        )
+        Text(
+            text = koraStringResource(id = R.string.student_list_search_no_results_message),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 16.dp)
+        )
     }
 }
 
@@ -301,9 +369,14 @@ private fun StudentListScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
             students = previewStudentsWithDebt,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onClearSearch = {},
             onStudentClick = {},
             onEditStudent = {},
-            currencyCode = "TRY"
+            currencyCode = "TRY",
+            isSearchActive = false,
+            hasAnyStudents = true
         )
     }
 }
@@ -314,9 +387,14 @@ private fun StudentListEmptyScreenPreview() {
     KoraTheme {
         StudentListScreenContent(
             students = emptyList(),
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onClearSearch = {},
             onStudentClick = {},
             onEditStudent = {},
-            currencyCode = "TRY"
+            currencyCode = "TRY",
+            isSearchActive = false,
+            hasAnyStudents = false
         )
     }
 }

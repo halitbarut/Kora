@@ -48,6 +48,16 @@ internal sealed class KoraDestination(
         labelRes = R.string.homework_title
     )
 
+    object EditStudentProfile : StudentScoped(
+        baseRoute = "student_profile",
+        labelRes = R.string.student_profile_title
+    )
+
+    object AddStudentProfile : KoraDestination(
+        route = "student_profile/add",
+        labelRes = R.string.add_student_profile_title
+    )
+
     object Settings : KoraDestination(
         route = "settings",
         labelRes = R.string.settings_title
@@ -68,6 +78,8 @@ internal sealed class KoraDestination(
             Dashboard.route -> Dashboard
             Calendar.route -> Calendar
             Homework.route -> Homework
+            EditStudentProfile.route -> EditStudentProfile
+            AddStudentProfile.route -> AddStudentProfile
             Settings.route -> Settings
             Onboarding.route -> Onboarding
             else -> null
@@ -79,6 +91,7 @@ internal sealed class KoraDestination(
                 route == Dashboard.route || route.startsWith("${Dashboard.baseRoute}/") -> Dashboard
                 route == Calendar.route || route.startsWith("${Calendar.baseRoute}/") -> Calendar
                 route == Homework.route || route.startsWith("${Homework.baseRoute}/") -> Homework
+                route == EditStudentProfile.route || route.startsWith("${EditStudentProfile.baseRoute}/") -> EditStudentProfile
                 else -> null
             }
         }

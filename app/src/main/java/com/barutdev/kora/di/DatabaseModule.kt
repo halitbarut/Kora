@@ -7,6 +7,7 @@ import com.barutdev.kora.data.local.HomeworkDao
 import com.barutdev.kora.data.local.KoraDatabase
 import com.barutdev.kora.data.local.LessonDao
 import com.barutdev.kora.data.local.StudentDao
+import com.barutdev.kora.data.local.migrations.MIGRATION_7_8
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +29,8 @@ object DatabaseModule {
         context,
         KoraDatabase::class.java,
         DATABASE_NAME
-    ).fallbackToDestructiveMigration()
+    ).addMigrations(MIGRATION_7_8)
+        .fallbackToDestructiveMigration()
         .build()
 
     @Provides

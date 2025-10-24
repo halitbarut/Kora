@@ -68,6 +68,8 @@ import com.barutdev.kora.ui.screens.homework.HomeworkScreen
 import com.barutdev.kora.ui.screens.settings.SettingsScreen
 import com.barutdev.kora.ui.screens.onboarding.OnboardingScreen
 import com.barutdev.kora.ui.screens.student_list.StudentListScreen
+import com.barutdev.kora.ui.screens.student_profile.AddStudentProfileScreen
+import com.barutdev.kora.ui.screens.student_profile.EditStudentProfileScreen
 import com.barutdev.kora.util.koraStringResource
 import java.util.Locale
 
@@ -327,7 +329,9 @@ fun KoraNavGraph(
                     route = KoraDestination.StudentList.route
                 ) {
                     StudentListScreen(
-                        onAddStudent = {},
+                        onAddStudent = {
+                            navController.navigate(KoraDestination.AddStudentProfile.route)
+                        },
                         onStudentClick = { studentId ->
                             studentId.toIntOrNull()?.let { id ->
                                 navController.navigateToStudentScoped(
@@ -336,6 +340,22 @@ fun KoraNavGraph(
                                     bottomBarState = bottomBarState
                                 )
                             }
+                        },
+                        onEditStudentProfile = { studentId ->
+                            navController.navigate(
+                                KoraDestination.EditStudentProfile.createRoute(studentId)
+                            )
+                        }
+                    )
+                }
+
+                composable(
+                    route = KoraDestination.AddStudentProfile.route
+                ) {
+                    AddStudentProfileScreen(
+                        onBack = { navController.popBackStack() },
+                        onProfileSaved = {
+                            navController.popBackStack()
                         }
                     )
                 }
@@ -364,6 +384,11 @@ fun KoraNavGraph(
                                     }
                                     launchSingleTop = true
                                 }
+                            },
+                            onEditStudentProfile = { id ->
+                                navController.navigate(
+                                    KoraDestination.EditStudentProfile.createRoute(id)
+                                )
                             }
                         )
                     }
@@ -415,6 +440,16 @@ fun KoraNavGraph(
                             }
                         )
                     }
+                }
+
+                composable(
+                    route = KoraDestination.EditStudentProfile.route,
+                    arguments = KoraDestination.EditStudentProfile.arguments()
+                ) {
+                    EditStudentProfileScreen(
+                        onBack = { navController.popBackStack() },
+                        onProfileSaved = { navController.popBackStack() }
+                    )
                 }
 
                 composable(
@@ -654,6 +689,7 @@ private fun KoraDestination.StudentScoped.icon(): ImageVector = when (this) {
     KoraDestination.Dashboard -> Icons.Outlined.Dashboard
     KoraDestination.Calendar -> Icons.Outlined.CalendarMonth
     KoraDestination.Homework -> Icons.Outlined.Assignment
+    KoraDestination.EditStudentProfile -> Icons.Outlined.Dashboard
 }
 
 private fun NavBackStackEntry?.studentIdOrNull(): Int? {

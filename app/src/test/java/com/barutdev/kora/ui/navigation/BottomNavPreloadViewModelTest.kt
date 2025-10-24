@@ -4,6 +4,7 @@ import com.barutdev.kora.MainDispatcherRule
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.StudentProfileUpdate
 import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
@@ -52,7 +53,8 @@ private class RecordingStudentRepository : StudentRepository {
     override fun getStudentById(id: Int): Flow<Student?> = flowOf(null).also { studentCallCount += 1 }
     override suspend fun addStudent(student: Student) = error("unused")
     override suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double) = error("unused")
-    override suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double) = error("unused")
+    override suspend fun updateStudentProfile(update: StudentProfileUpdate) = error("unused")
+    override suspend fun deleteStudent(studentId: Int) = error("unused")
 }
 
 private class RecordingLessonRepository : LessonRepository {
