@@ -26,6 +26,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,11 +35,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeworkViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -49,17 +53,28 @@ class HomeworkViewModel @Inject constructor(
     private val generateAiInsightsUseCase: GenerateAiInsightsUseCase
 ) : ViewModel() {
 
-    val studentId: Int? = savedStateHandle[STUDENT_ID_ARG]
-    val hasStudentReference: Boolean = studentId != null
+    private val studentIdState: StateFlow<Int?> =
+        savedStateHandle.getStateFlow<Int?>(STUDENT_ID_ARG, savedStateHandle[STUDENT_ID_ARG])
 
-    private val student: StateFlow<Student?> = studentId?.let { id ->
-        studentRepository.getStudentById(id)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = null
-            )
-    } ?: MutableStateFlow(null)
+    val studentId: Int?
+        get() = studentIdState.value
+
+    val hasStudentReference: Boolean
+        get() = studentId != null
+
+    private val student: StateFlow<Student?> = studentIdState
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(null)
+            } else {
+                studentRepository.getStudentById(id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 
     val studentName: StateFlow<String> = student
         .map { studentSnapshot -> studentSnapshot?.fullName ?: "" }
@@ -69,14 +84,19 @@ class HomeworkViewModel @Inject constructor(
             initialValue = ""
         )
 
-    val homework: StateFlow<List<Homework>> = studentId?.let { id ->
-        homeworkRepository.getHomeworkForStudent(id)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList()
-            )
-    } ?: MutableStateFlow(emptyList())
+    val homework: StateFlow<List<Homework>> = studentIdState
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(emptyList())
+            } else {
+                homeworkRepository.getHomeworkForStudent(id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     private val dialogVisibility = MutableStateFlow(false)
     val isDialogVisible: StateFlow<Boolean> = dialogVisibility.asStateFlow()
@@ -94,18 +114,17 @@ class HomeworkViewModel @Inject constructor(
     private var latestHomeworkSnapshot: List<Homework> = emptyList()
     private var latestComputedSignature: String? = null
     private var aiInsightsJob: Job? = null
+    private var aiInsightsObservationJob: Job? = null
     private var activeRequestSignature: String? = null
     private var isCacheFetchInProgress: Boolean = false
 
     init {
         Log.d("HomeworkViewModel", "Created for studentId=$studentId")
-        if (hasStudentReference) {
-            observeAiInsights()
-        }
     }
 
     private fun observeAiInsights() {
-        viewModelScope.launch {
+        if (aiInsightsObservationJob?.isActive == true) return
+        aiInsightsObservationJob = viewModelScope.launch {
             combine(student, homework) { studentSnapshot, homeworkSnapshot ->
                 studentSnapshot to homeworkSnapshot
             }
@@ -170,6 +189,7 @@ class HomeworkViewModel @Inject constructor(
     fun ensureAiInsights(locale: Locale) {
         val id = studentId ?: return
         lastRequestedLocale = locale
+        observeAiInsights()
         val signature = computeSignature(locale)
         latestComputedSignature = signature
         isCacheFetchInProgress = true
@@ -225,6 +245,7 @@ class HomeworkViewModel @Inject constructor(
             return
         }
         lastRequestedLocale = locale
+        observeAiInsights()
         val signature = computeSignature(locale)
         latestComputedSignature = signature
         triggerAiInsightsGeneration(

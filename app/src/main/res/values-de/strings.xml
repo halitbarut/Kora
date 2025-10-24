@@ -9,6 +9,28 @@
     <string name="student_list_add_student_fab_content_description">Neuen Schüler hinzufügen</string>
     <string name="student_list_list_item_trailing_icon_content_description">Schülerdetails anzeigen</string>
     <string name="student_list_edit_student_content_description">Schüler bearbeiten</string>
+    <string name="student_list_search_placeholder">Schüler suchen</string>
+    <string name="student_list_search_clear_content_description">Suche löschen</string>
+    <string name="student_list_search_no_results_message">Keine Schüler entsprechen deiner Suche.</string>
+
+    <!-- Student Profile Screen -->
+    <string name="student_profile_title">Schülerprofil</string>
+    <string name="student_profile_back_content_description">Zurück navigieren</string>
+    <string name="student_profile_full_name_label">Vollständiger Name</string>
+    <string name="student_profile_full_name_error">Bitte einen vollständigen Namen eingeben.</string>
+    <string name="student_profile_parent_name_label">Name des Erziehungsberechtigten</string>
+    <string name="student_profile_parent_contact_label">Kontakt des Erziehungsberechtigten</string>
+    <string name="student_profile_hourly_rate_label">Individueller Stundensatz</string>
+    <string name="student_profile_hourly_rate_helper">Leer lassen, um den Standardwert (%1$s) zu verwenden</string>
+    <string name="student_profile_hourly_rate_error">Geben Sie einen gültigen Stundensatz ein.</string>
+    <string name="student_profile_notes_label">Notizen</string>
+    <string name="student_profile_save">Speichern</string>
+    <string name="student_profile_save_success">Profil gespeichert.</string>
+    <string name="student_profile_save_error">Profil konnte nicht gespeichert werden. Bitte erneut versuchen.</string>
+    <string name="student_profile_optional_label">(optional)</string>
+    <string name="student_profile_required_indicator">*</string>
+    <string name="add_student_profile_title">Neue:n Schüler:in hinzufügen</string>
+    <string name="add_student_profile_save_success">Schüler:in hinzugefügt.</string>
 
     <!-- Navigation & Screen Titles -->
     <string name="dashboard_title">Dashboard</string>
@@ -152,6 +174,7 @@
     <string name="dashboard_ai_no_data_message">Protokolliere Unterrichtsstunden oder Hausaufgaben, um Dashboard-Einblicke zu erhalten.</string>
     <string name="homework_ai_no_data_message">Füge Hausaufgabedetails für %1$s hinzu, um KI-Einblicke zu erhalten.</string>
     <string name="dashboard_settings_icon_description">Einstellungen öffnen</string>
+    <string name="dashboard_edit_student_content_description">Schülerprofil bearbeiten</string>
     <string name="top_bar_navigate_to_student_list_content_description">Zur Schülerliste wechseln</string>
 
     <!-- Notifications -->
@@ -184,16 +207,10 @@
     <string name="calendar_status_scheduled">Geplant</string>
     <string name="calendar_status_scheduled_needs_logging">Geplant (Protokoll erforderlich)</string>
     <string name="calendar_status_cancelled">Abgesagt</string>
-
-    <!-- Add Student Dialog -->
-    <string name="add_student_dialog_title">Neuen Schüler hinzufügen</string>
-    <string name="add_student_dialog_full_name">Vollständiger Name</string>
-    <string name="add_student_dialog_hourly_rate">Stundensatz</string>
+    <!-- Allgemeine Dialogaktionen -->
     <string name="dialog_action_cancel">Abbrechen</string>
     <string name="dialog_action_ok">OK</string>
     <string name="dialog_action_save">Speichern</string>
-    <string name="add_student_dialog_save">Speichern</string>
-    <string name="add_student_dialog_cancel">Abbrechen</string>
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Schüler bearbeiten</string>

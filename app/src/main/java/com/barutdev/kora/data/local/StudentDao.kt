@@ -30,11 +30,29 @@ interface StudentDao {
     @Query("SELECT * FROM students")
     fun getAllStudents(): Flow<List<StudentEntity>>
 
-    @Query("UPDATE students SET hourlyRate = :newRate WHERE id = :studentId")
+    @Query("UPDATE students SET hourlyRate = :newRate, customHourlyRate = :newRate WHERE id = :studentId")
     suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double)
 
-    @Query("UPDATE students SET fullName = :fullName, hourlyRate = :hourlyRate WHERE id = :studentId")
-    suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
+    @Query(
+        """
+        UPDATE students SET
+            fullName = :fullName,
+            parentName = :parentName,
+            parentContact = :parentContact,
+            notes = :notes,
+            hourlyRate = CASE WHEN :customHourlyRate IS NOT NULL THEN :customHourlyRate ELSE hourlyRate END,
+            customHourlyRate = :customHourlyRate
+        WHERE id = :studentId
+        """
+    )
+    suspend fun updateStudentProfile(
+        studentId: Int,
+        fullName: String,
+        parentName: String?,
+        parentContact: String?,
+        notes: String?,
+        customHourlyRate: Double?
+    )
 
     @Query("SELECT * FROM students")
     suspend fun getStudentsSnapshot(): List<StudentEntity>

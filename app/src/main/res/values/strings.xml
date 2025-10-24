@@ -9,6 +9,33 @@
     <string name="student_list_add_student_fab_content_description">Add new student</string>
     <string name="student_list_list_item_trailing_icon_content_description">View student details</string>
     <string name="student_list_edit_student_content_description">Edit student</string>
+    <string name="student_list_search_placeholder">Search students</string>
+    <string name="student_list_search_clear_content_description">Clear search</string>
+    <string name="student_list_search_no_results_message">No students match your search.</string>
+
+    <!-- Student Profile Screen -->
+    <string name="student_profile_title">Student Profile</string>
+    <string name="student_profile_back_content_description">Navigate back</string>
+    <string name="student_profile_full_name_label">Full name</string>
+    <string name="student_profile_full_name_error">Enter a full name.</string>
+    <string name="student_profile_parent_name_label">Parent or guardian name</string>
+    <string name="student_profile_parent_contact_label">Parent contact info</string>
+    <string name="student_profile_hourly_rate_label">Custom hourly rate</string>
+    <string name="student_profile_hourly_rate_helper">Leave blank to use the default (%1$s)</string>
+    <string name="student_profile_hourly_rate_error">Enter a valid hourly rate.</string>
+    <string name="student_profile_notes_label">Notes</string>
+    <string name="student_profile_save">Save</string>
+    <string name="student_profile_save_success">Profile saved.</string>
+    <string name="student_profile_save_error">We couldn\'t save the profile. Try again.</string>
+    <string name="student_profile_optional_label">(optional)</string>
+    <string name="student_profile_required_indicator">*</string>
+    <string name="add_student_profile_title">Add New Student</string>
+    <string name="add_student_profile_save_success">Student added.</string>
+
+    <!-- Generic Dialog Actions -->
+    <string name="dialog_action_cancel">Cancel</string>
+    <string name="dialog_action_ok">OK</string>
+    <string name="dialog_action_save">Save</string>
 
     <!-- Navigation & Screen Titles -->
     <string name="dashboard_title">Dashboard</string>
@@ -137,6 +164,7 @@
     <string name="dashboard_ai_no_data_message">Log lessons or homework to generate dashboard insights.</string>
     <string name="homework_ai_no_data_message">Add homework details for %1$s to generate AI insights.</string>
     <string name="dashboard_settings_icon_description">Open settings</string>
+    <string name="dashboard_edit_student_content_description">Edit student profile</string>
     <string name="top_bar_navigate_to_student_list_content_description">Go to student list</string>
 
     <!-- Notifications -->
@@ -169,16 +197,6 @@
     <string name="calendar_status_scheduled">Scheduled</string>
     <string name="calendar_status_scheduled_needs_logging">Scheduled (Needs Logging)</string>
     <string name="calendar_status_cancelled">Cancelled</string>
-
-    <!-- Add Student Dialog -->
-    <string name="add_student_dialog_title">Add New Student</string>
-    <string name="add_student_dialog_full_name">Full Name</string>
-    <string name="add_student_dialog_hourly_rate">Hourly Rate</string>
-    <string name="dialog_action_cancel">Cancel</string>
-    <string name="dialog_action_ok">OK</string>
-    <string name="dialog_action_save">Save</string>
-    <string name="add_student_dialog_save">Save</string>
-    <string name="add_student_dialog_cancel">Cancel</string>
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Edit Student</string>

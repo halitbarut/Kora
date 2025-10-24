@@ -9,25 +9,32 @@ import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOn
 
 data class StudentWithDebt(
     val student: Student,
     val currentDebt: Double
 )
 
+private data class StudentHours(
+    val student: Student,
+    val totalHours: Double
+)
+
 data class StudentListUiState(
     val students: List<StudentWithDebt> = emptyList(),
-    val defaultHourlyRate: Double = 0.0
+    val defaultHourlyRate: Double = 0.0,
+    val searchQuery: String = "",
+    val isSearchActive: Boolean = false,
+    val hasAnyStudents: Boolean = false
 )
 
 @HiltViewModel
@@ -36,135 +43,73 @@ class StudentListViewModel @Inject constructor(
     private val lessonRepository: LessonRepository,
     userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
-    private val _showAddStudentDialog = MutableStateFlow(false)
-    val showAddStudentDialog: StateFlow<Boolean> = _showAddStudentDialog.asStateFlow()
-
-    private val _isEditStudentDialogVisible = MutableStateFlow(false)
-    val isEditStudentDialogVisible: StateFlow<Boolean> = _isEditStudentDialogVisible.asStateFlow()
-
-    private val _studentToEdit = MutableStateFlow<Student?>(null)
-    val studentToEdit: StateFlow<Student?> = _studentToEdit.asStateFlow()
 
     private val studentsFlow = studentRepository.getAllStudents()
     private val lessonsFlow = lessonRepository.getAllLessons()
+    private val searchQuery = MutableStateFlow("")
 
-    val uiState: StateFlow<StudentListUiState> = combine(
+    private val studentHoursFlow: Flow<List<StudentHours>> = combine(
         studentsFlow,
-        lessonsFlow,
-        userPreferencesRepository.userPreferences.map { preferences -> preferences.defaultHourlyRate }
-    ) { students, lessons, hourlyRate ->
+        lessonsFlow
+    ) { students, lessons ->
         val completedLessonsByStudent = lessons
             .filter { it.status == LessonStatus.COMPLETED }
             .groupBy { lesson -> lesson.studentId }
 
-        val studentsWithDebt = students.map { student ->
+        students.map { student ->
             val totalHours = completedLessonsByStudent[student.id]
                 ?.sumOf { lesson -> lesson.durationInHours ?: 0.0 }
                 ?: 0.0
+            StudentHours(
+                student = student,
+                totalHours = totalHours
+            )
+        }
+    }.flowOn(Dispatchers.Default)
+
+    private val defaultHourlyRateFlow: Flow<Double> = userPreferencesRepository.userPreferences
+        .map { preferences -> preferences.defaultHourlyRate }
+
+    val uiState: StateFlow<StudentListUiState> = combine(
+        studentHoursFlow,
+        defaultHourlyRateFlow,
+        searchQuery
+    ) { studentHours, defaultHourlyRate, query ->
+        val studentsWithDebt = studentHours.map { (student, totalHours) ->
+            val effectiveRate = student.customHourlyRate ?: defaultHourlyRate
             StudentWithDebt(
                 student = student,
-                currentDebt = totalHours * student.hourlyRate
+                currentDebt = totalHours * effectiveRate
             )
+        }
+        val trimmedQuery = query.trim()
+        val filteredStudents = if (trimmedQuery.isEmpty()) {
+            studentsWithDebt
+        } else {
+            studentsWithDebt.filter { studentWithDebt ->
+                studentWithDebt.student.fullName.contains(trimmedQuery, ignoreCase = true)
+            }
         }
 
         StudentListUiState(
-            students = studentsWithDebt,
-            defaultHourlyRate = hourlyRate
+            students = filteredStudents,
+            defaultHourlyRate = defaultHourlyRate,
+            searchQuery = query,
+            isSearchActive = trimmedQuery.isNotEmpty(),
+            hasAnyStudents = studentsWithDebt.isNotEmpty()
         )
-    }.flowOn(Dispatchers.Default)
-        .stateIn(
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = StudentListUiState()
     )
 
-    fun onAddStudentClick() {
-        _showAddStudentDialog.value = true
+    fun onSearchQueryChange(query: String) {
+        searchQuery.value = query
     }
 
-    fun onAddStudentDismiss() {
-        _showAddStudentDialog.value = false
+    fun onClearSearchQuery() {
+        searchQuery.value = ""
     }
 
-    fun onSaveStudent(fullName: String, hourlyRate: String) {
-        viewModelScope.launch {
-            val success = addStudent(fullName = fullName, hourlyRate = hourlyRate)
-            if (success) {
-                _showAddStudentDialog.value = false
-            }
-        }
-    }
-
-    suspend fun addStudent(fullName: String, hourlyRate: String): Boolean {
-        val trimmedName = fullName.trim()
-        val rate = hourlyRate.toDoubleOrNull() ?: return false
-
-        if (trimmedName.isEmpty()) return false
-
-        val newStudent = Student(
-            id = 0,
-            fullName = trimmedName,
-            hourlyRate = rate
-        )
-
-        return try {
-            studentRepository.addStudent(newStudent)
-            true
-        } catch (exception: Exception) {
-            false
-        }
-    }
-
-    fun onEditStudentClicked(student: Student) {
-        _studentToEdit.value = student
-        _isEditStudentDialogVisible.value = true
-    }
-
-    fun onEditStudentDismiss() {
-        _isEditStudentDialogVisible.value = false
-        _studentToEdit.value = null
-    }
-
-    fun onDeleteStudent() {
-        val student = _studentToEdit.value ?: return
-        viewModelScope.launch {
-            val success = deleteStudent(student.id)
-            if (success) {
-                onEditStudentDismiss()
-            }
-        }
-    }
-
-    fun onUpdateStudent(fullName: String, hourlyRate: String) {
-        val student = _studentToEdit.value ?: return
-        viewModelScope.launch {
-            val success = updateStudent(student.id, fullName, hourlyRate)
-            if (success) {
-                onEditStudentDismiss()
-            }
-        }
-    }
-
-    private suspend fun deleteStudent(studentId: Int): Boolean {
-        return try {
-            studentRepository.deleteStudent(studentId)
-            true
-        } catch (exception: Exception) {
-            false
-        }
-    }
-
-    suspend fun updateStudent(studentId: Int, newName: String, newRate: String): Boolean {
-        val trimmedName = newName.trim()
-        val rate = newRate.toDoubleOrNull() ?: return false
-
-        if (trimmedName.isEmpty()) return false
-
-        return try {
-            studentRepository.updateStudent(studentId, trimmedName, rate)
-            true
-        } catch (exception: Exception) {
-            false
-        }
-    }
 }

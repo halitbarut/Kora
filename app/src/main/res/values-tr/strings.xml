@@ -9,6 +9,28 @@
     <string name="student_list_add_student_fab_content_description">Yeni öğrenci ekle</string>
     <string name="student_list_list_item_trailing_icon_content_description">Öğrenci ayrıntılarını görüntüle</string>
     <string name="student_list_edit_student_content_description">Öğrenciyi düzenle</string>
+    <string name="student_list_search_placeholder">Öğrenci ara</string>
+    <string name="student_list_search_clear_content_description">Aramayı temizle</string>
+    <string name="student_list_search_no_results_message">Aramanızla eşleşen öğrenci yok.</string>
+
+    <!-- Student Profile Screen -->
+    <string name="student_profile_title">Öğrenci Profili</string>
+    <string name="student_profile_back_content_description">Geri git</string>
+    <string name="student_profile_full_name_label">Tam ad</string>
+    <string name="student_profile_full_name_error">Lütfen tam bir ad girin.</string>
+    <string name="student_profile_parent_name_label">Veli adı</string>
+    <string name="student_profile_parent_contact_label">Veli iletişim bilgisi</string>
+    <string name="student_profile_hourly_rate_label">Özel saatlik ücret</string>
+    <string name="student_profile_hourly_rate_helper">Varsayılan (%1$s) değeri kullanmak için boş bırakın</string>
+    <string name="student_profile_hourly_rate_error">Geçerli bir saatlik ücret girin.</string>
+    <string name="student_profile_notes_label">Notlar</string>
+    <string name="student_profile_save">Kaydet</string>
+    <string name="student_profile_save_success">Profil kaydedildi.</string>
+    <string name="student_profile_save_error">Profili kaydedemedik. Lütfen tekrar deneyin.</string>
+    <string name="student_profile_optional_label">(isteğe bağlı)</string>
+    <string name="student_profile_required_indicator">*</string>
+    <string name="add_student_profile_title">Yeni Öğrenci Ekle</string>
+    <string name="add_student_profile_save_success">Öğrenci eklendi.</string>
 
     <!-- Navigation & Screen Titles -->
     <string name="dashboard_title">Gösterge Paneli</string>
@@ -137,6 +159,7 @@
     <string name="dashboard_ai_no_data_message">Panel içgörülerini oluşturmak için dersleri veya ödevleri kaydedin.</string>
     <string name="homework_ai_no_data_message">%1$s için ödev detayları ekleyerek yapay zeka içgörülerini oluşturun.</string>
     <string name="dashboard_settings_icon_description">Ayarları aç</string>
+    <string name="dashboard_edit_student_content_description">Öğrenci profilini düzenle</string>
     <string name="top_bar_navigate_to_student_list_content_description">Öğrenci listesine git</string>
 
     <!-- Notifications -->
@@ -169,16 +192,10 @@
     <string name="calendar_status_scheduled">Planlandı</string>
     <string name="calendar_status_scheduled_needs_logging">Planlandı (Kaydı Gerekli)</string>
     <string name="calendar_status_cancelled">İptal edildi</string>
-
-    <!-- Add Student Dialog -->
-    <string name="add_student_dialog_title">Yeni Öğrenci Ekle</string>
-    <string name="add_student_dialog_full_name">Tam Ad</string>
-    <string name="add_student_dialog_hourly_rate">Saatlik Ücret</string>
+    <!-- Genel Dialog Eylemleri -->
     <string name="dialog_action_cancel">İptal</string>
     <string name="dialog_action_ok">Tamam</string>
     <string name="dialog_action_save">Kaydet</string>
-    <string name="add_student_dialog_save">Kaydet</string>
-    <string name="add_student_dialog_cancel">İptal</string>
 
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Öğrenciyi Düzenle</string>

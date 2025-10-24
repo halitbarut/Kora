@@ -4,6 +4,7 @@ import com.barutdev.kora.data.local.StudentDao
 import com.barutdev.kora.data.mapper.toDomain
 import com.barutdev.kora.data.mapper.toEntity
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.StudentProfileUpdate
 import com.barutdev.kora.domain.repository.StudentRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,7 +26,11 @@ class StudentRepositoryImpl @Inject constructor(
 
     override suspend fun addStudent(student: Student) {
         val timestamp = student.lastPaymentDate ?: System.currentTimeMillis()
-        val entity = student.copy(lastPaymentDate = timestamp).toEntity()
+        val entity = student.copy(
+            lastPaymentDate = timestamp,
+            hourlyRate = student.customHourlyRate ?: student.hourlyRate,
+            customHourlyRate = student.customHourlyRate
+        ).toEntity()
         studentDao.insert(entity)
     }
 
@@ -33,8 +38,15 @@ class StudentRepositoryImpl @Inject constructor(
         studentDao.updateStudentHourlyRate(studentId, newRate)
     }
 
-    override suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double) {
-        studentDao.updateStudent(studentId, fullName, hourlyRate)
+    override suspend fun updateStudentProfile(update: StudentProfileUpdate) {
+        studentDao.updateStudentProfile(
+            studentId = update.id,
+            fullName = update.fullName,
+            parentName = update.parentName,
+            parentContact = update.parentContact,
+            notes = update.notes,
+            customHourlyRate = update.customHourlyRate
+        )
     }
 
     override suspend fun deleteStudent(studentId: Int) {

@@ -99,7 +99,11 @@ class DataBackupManager @Inject constructor(
         entity.id.toString(),
         entity.fullName,
         entity.hourlyRate.toString(),
-        entity.lastPaymentDate?.toString() ?: ""
+        entity.lastPaymentDate?.toString() ?: "",
+        entity.parentName ?: "",
+        entity.parentContact ?: "",
+        entity.notes ?: "",
+        entity.customHourlyRate?.toString() ?: ""
     )
 
     private fun formatLesson(entity: LessonEntity): String = buildCsvRecord(
@@ -134,11 +138,29 @@ class DataBackupManager @Inject constructor(
         val hourlyRate = fields[2].toDoubleOrNull()
             ?: throw MalformedBackupException("Invalid hourly rate at line $lineNumber")
         val lastPaymentDate = fields[3].takeIf { it.isNotBlank() }?.toLongOrNull()
+        val parentName = fields.getOrNull(4)?.takeIf { it.isNotBlank() }
+        val parentContact = fields.getOrNull(5)?.takeIf { it.isNotBlank() }
+        val notes = fields.getOrNull(6)?.takeIf { it.isNotBlank() }
+        val customHourlyRate = if (fields.size >= 8) {
+            val rawCustomRate = fields[7]
+            if (rawCustomRate.isBlank()) {
+                null
+            } else {
+                rawCustomRate.toDoubleOrNull()
+                    ?: throw MalformedBackupException("Invalid custom hourly rate at line $lineNumber")
+            }
+        } else {
+            hourlyRate
+        }
         return StudentEntity(
             id = id,
             fullName = fullName,
             hourlyRate = hourlyRate,
-            lastPaymentDate = lastPaymentDate
+            lastPaymentDate = lastPaymentDate,
+            parentName = parentName,
+            parentContact = parentContact,
+            notes = notes,
+            customHourlyRate = customHourlyRate
         )
     }
 

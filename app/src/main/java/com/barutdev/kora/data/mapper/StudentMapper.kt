@@ -7,7 +7,11 @@ fun StudentEntity.toDomain(): Student = Student(
     id = id,
     fullName = fullName,
     hourlyRate = hourlyRate,
-    lastPaymentDate = lastPaymentDate
+    lastPaymentDate = lastPaymentDate,
+    parentName = parentName,
+    parentContact = parentContact,
+    notes = notes,
+    customHourlyRate = customHourlyRate
 )
 
 fun List<StudentEntity>.toDomain(): List<Student> = map(StudentEntity::toDomain)
@@ -16,5 +20,9 @@ fun Student.toEntity(): StudentEntity = StudentEntity(
     id = id,
     fullName = fullName,
     hourlyRate = hourlyRate,
-    lastPaymentDate = lastPaymentDate
+    lastPaymentDate = lastPaymentDate,
+    parentName = parentName,
+    parentContact = parentContact,
+    notes = notes,
+    customHourlyRate = customHourlyRate
 )

@@ -1,6 +1,7 @@
 package com.barutdev.kora.domain.repository
 
 import com.barutdev.kora.domain.model.Student
+import com.barutdev.kora.domain.model.StudentProfileUpdate
 import kotlinx.coroutines.flow.Flow
 
 interface StudentRepository {
@@ -12,7 +13,7 @@ interface StudentRepository {
 
     suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double)
 
-    suspend fun updateStudent(studentId: Int, fullName: String, hourlyRate: Double)
+    suspend fun updateStudentProfile(update: StudentProfileUpdate)
 
     suspend fun deleteStudent(studentId: Int)
 }
