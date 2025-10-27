@@ -101,3 +101,6 @@ openspec/tmp/
 openspec/cache/
 openspec/changes/*/tasks.md.backup
 openspec/changes/*/.history/
+
+# Codex agent-specific files
+.codex/
