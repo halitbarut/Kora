@@ -14,16 +14,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,10 +41,12 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,6 +56,7 @@ import com.barutdev.kora.domain.model.Student
 import com.barutdev.kora.ui.navigation.FabConfig
 import com.barutdev.kora.ui.navigation.ScreenScaffoldConfig
 import com.barutdev.kora.ui.navigation.TopBarConfig
+import com.barutdev.kora.ui.navigation.TopBarAction as NavigationTopBarAction
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.util.formatCurrency
@@ -63,6 +68,8 @@ fun StudentListScreen(
     onAddStudent: () -> Unit,
     onStudentClick: (String) -> Unit,
     onEditStudentProfile: (Int) -> Unit,
+    onNavigateToReports: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: StudentListViewModel = hiltViewModel()
 ) {
@@ -74,8 +81,37 @@ fun StudentListScreen(
     val containerColor = MaterialTheme.colorScheme.primary
     val contentColor = MaterialTheme.colorScheme.onPrimary
 
-    val topBarConfig = remember(topBarTitle) {
-        TopBarConfig(title = topBarTitle)
+    val topBarActionDefinitions = remember(
+        onNavigateToReports,
+        onNavigateToSettings
+    ) {
+        listOf(
+            TopBarAction(
+                icon = Icons.Outlined.BarChart,
+                descriptionResId = R.string.student_list_reports_action_description,
+                onClick = onNavigateToReports
+            ),
+            TopBarAction(
+                icon = Icons.Filled.Settings,
+                descriptionResId = R.string.dashboard_settings_icon_description,
+                onClick = onNavigateToSettings
+            )
+        )
+    }
+
+    val topBarActions = topBarActionDefinitions.map { action ->
+        NavigationTopBarAction(
+            icon = action.icon,
+            contentDescription = koraStringResource(id = action.descriptionResId),
+            onClick = action.onClick
+        )
+    }
+
+    val topBarConfig = remember(topBarTitle, topBarActions) {
+        TopBarConfig(
+            title = topBarTitle,
+            actions = topBarActions
+        )
     }
     val fabConfig = remember(
         addStudentDescription,
@@ -398,6 +434,12 @@ private fun StudentListEmptyScreenPreview() {
         )
     }
 }
+
+private data class TopBarAction(
+    val icon: ImageVector,
+    @StringRes val descriptionResId: Int,
+    val onClick: () -> Unit
+)
 
 private fun Student.initials(): String = fullName
     .split(" ")

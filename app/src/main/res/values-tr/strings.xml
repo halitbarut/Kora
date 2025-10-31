@@ -9,6 +9,7 @@
     <string name="student_list_add_student_fab_content_description">Yeni öğrenci ekle</string>
     <string name="student_list_list_item_trailing_icon_content_description">Öğrenci ayrıntılarını görüntüle</string>
     <string name="student_list_edit_student_content_description">Öğrenciyi düzenle</string>
+    <string name="student_list_reports_action_description">Raporlar genel görünümünü aç</string>
     <string name="student_list_search_placeholder">Öğrenci ara</string>
     <string name="student_list_search_clear_content_description">Aramayı temizle</string>
     <string name="student_list_search_no_results_message">Aramanızla eşleşen öğrenci yok.</string>
