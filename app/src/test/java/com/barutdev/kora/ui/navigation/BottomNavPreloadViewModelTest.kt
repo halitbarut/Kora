@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.navigation
 
+import androidx.lifecycle.viewModelScope
 import com.barutdev.kora.MainDispatcherRule
 import com.barutdev.kora.domain.model.Homework
 import com.barutdev.kora.domain.model.Lesson
@@ -9,6 +10,8 @@ import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -24,7 +27,7 @@ class BottomNavPreloadViewModelTest {
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun prime_collectsRepositoriesOncePerStudent() = runTest(mainDispatcherRule.dispatcher) {
+    fun prime_collectsRepositoriesOncePerStudent() = runTest {
         val studentRepository = RecordingStudentRepository()
         val lessonRepository = RecordingLessonRepository()
         val homeworkRepository = RecordingHomeworkRepository()
@@ -44,6 +47,12 @@ class BottomNavPreloadViewModelTest {
         assertEquals(1, studentRepository.studentCallCount)
         assertEquals(1, lessonRepository.lessonCallCount)
         assertEquals(1, homeworkRepository.homeworkCallCount)
+
+        cancel(viewModel)
+    }
+
+    private fun cancel(viewModel: BottomNavPreloadViewModel) {
+        viewModel.viewModelScope.cancel()
     }
 }
 

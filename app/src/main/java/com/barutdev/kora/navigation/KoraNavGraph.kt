@@ -16,10 +16,12 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Groups
@@ -65,6 +67,7 @@ import com.barutdev.kora.ui.navigation.rememberKoraScaffoldController
 import com.barutdev.kora.ui.screens.calendar.CalendarScreen
 import com.barutdev.kora.ui.screens.dashboard.DashboardScreen
 import com.barutdev.kora.ui.screens.homework.HomeworkScreen
+import com.barutdev.kora.ui.screens.reports.ReportsScreen
 import com.barutdev.kora.ui.screens.settings.SettingsScreen
 import com.barutdev.kora.ui.screens.onboarding.OnboardingScreen
 import com.barutdev.kora.ui.screens.student_list.StudentListScreen
@@ -115,7 +118,7 @@ fun KoraNavGraph(
         }
     }
 
-    val bottomBarVisible = shouldShowBottomBar(currentDestination, currentStudentId != null)
+    val bottomBarVisible = shouldShowBottomBar(currentDestination)
 
     val onNavigateToStudentList = remember(navController) {
         {
@@ -202,16 +205,33 @@ fun KoraNavGraph(
             modifier = modifier,
             topBar = { KoraTopBar(state = topBarState) },
             bottomBar = {
-                val studentId = currentStudentId
-                if (bottomBarVisible && studentId != null) {
+                if (bottomBarVisible) {
                     KoraBottomNavigation(
                         currentDestination = currentDestination,
                         onNavigate = { destination ->
-                            navController.navigateToStudentScoped(
-                                destination = destination,
-                                studentId = studentId,
-                                bottomBarState = bottomBarState
-                            )
+                            when (destination) {
+                                is KoraDestination.StudentScoped -> {
+                                    val targetStudentId = currentStudentId
+                                        ?: bottomBarState.lastStudentId(destination)
+                                        ?: bottomBarState.lastKnownStudentId()
+                                    if (targetStudentId != null) {
+                                        navController.navigateToStudentScoped(
+                                            destination = destination,
+                                            studentId = targetStudentId,
+                                            bottomBarState = bottomBarState
+                                        )
+                                    } else {
+                                        Log.w(
+                                            NAVIGATION_LOG_TAG,
+                                            "Skipping navigation to ${destination.baseRoute} because no student context is available"
+                                        )
+                                    }
+                                }
+                                KoraDestination.Reports -> {
+                                    navController.navigateToReports()
+                                }
+                                else -> Unit
+                            }
                         }
                     )
                 }
@@ -443,6 +463,18 @@ fun KoraNavGraph(
                 }
 
                 composable(
+                    route = KoraDestination.Reports.route
+                ) { backStackEntry ->
+                    Log.d(
+                        NAVIGATION_LOG_TAG,
+                        "Rendering Reports entry=${backStackEntry.id} (global)"
+                    )
+                    ReportsScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                composable(
                     route = KoraDestination.EditStudentProfile.route,
                     arguments = KoraDestination.EditStudentProfile.arguments()
                 ) {
@@ -506,7 +538,7 @@ private fun KoraTopBar(state: KoraTopBarState) {
 @Composable
 private fun KoraBottomNavigation(
     currentDestination: NavDestination?,
-    onNavigate: (KoraDestination.StudentScoped) -> Unit
+    onNavigate: (KoraDestination) -> Unit
 ) {
     NavigationBar {
         KoraDestination.bottomBarDestinations.forEach { destination ->
@@ -533,12 +565,8 @@ private fun KoraBottomNavigation(
 
 @VisibleForTesting
 internal fun shouldShowBottomBar(
-    currentDestination: NavDestination?,
-    hasStudentId: Boolean
-): Boolean {
-    if (!hasStudentId) return false
-    return currentDestination.isBottomBarDestination()
-}
+    currentDestination: NavDestination?
+): Boolean = currentDestination.isBottomBarDestination()
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraEnterTransition(): EnterTransition {
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)
@@ -670,8 +698,11 @@ internal fun resolveSlideDirection(
     }
 }
 
-private fun NavDestination?.isBottomBarDestination(): Boolean =
-    this.asStudentScopedDestination() != null
+private fun NavDestination?.isBottomBarDestination(): Boolean {
+    val route = this?.route ?: return false
+    if (this.asStudentScopedDestination() != null) return true
+    return route == KoraDestination.Reports.route
+}
 
 private fun NavDestination?.asStudentScopedDestination(): KoraDestination.StudentScoped? =
     KoraDestination.studentScopedFromRoute(this?.route)
@@ -685,11 +716,13 @@ private fun NavDestination?.isDestination(destination: KoraDestination): Boolean
     }
 }
 
-private fun KoraDestination.StudentScoped.icon(): ImageVector = when (this) {
+private fun KoraDestination.icon(): ImageVector = when (this) {
     KoraDestination.Dashboard -> Icons.Outlined.Dashboard
     KoraDestination.Calendar -> Icons.Outlined.CalendarMonth
     KoraDestination.Homework -> Icons.Outlined.Assignment
+    KoraDestination.Reports -> Icons.Outlined.BarChart
     KoraDestination.EditStudentProfile -> Icons.Outlined.Dashboard
+    else -> Icons.Outlined.Dashboard
 }
 
 private fun NavBackStackEntry?.studentIdOrNull(): Int? {
@@ -734,6 +767,18 @@ private fun NavHostController.navigateToStudentScoped(
 
     navigate(route) {
         launchSingleTop = shouldLaunchSingleTop
+        restoreState = false
+        popUpTo(graph.findStartDestination().id) {
+            saveState = false
+        }
+    }
+}
+
+private fun NavHostController.navigateToReports() {
+    if (currentDestination?.route == KoraDestination.Reports.route) return
+    Log.d(NAVIGATION_LOG_TAG, "navigateToReports route=${KoraDestination.Reports.route}")
+    navigate(KoraDestination.Reports.route) {
+        launchSingleTop = true
         restoreState = false
         popUpTo(graph.findStartDestination().id) {
             saveState = false

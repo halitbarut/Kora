@@ -48,33 +48,30 @@ class KoraNavGraphTest {
     }
 
     @Test
-    fun shouldShowBottomBar_returnsTrue_forBottomDestinationWithStudent() {
+    fun shouldShowBottomBar_returnsTrue_forStudentScopedDestination() {
         val shouldShow = shouldShowBottomBar(
-            currentDestination = destination(KoraDestination.Calendar.route),
-            hasStudentId = true
+            currentDestination = destination(KoraDestination.Calendar.route)
         )
 
         assertTrue(shouldShow)
     }
 
     @Test
-    fun shouldShowBottomBar_returnsFalse_whenStudentMissing() {
+    fun shouldShowBottomBar_returnsFalse_forNonBottomDestination() {
         val shouldShow = shouldShowBottomBar(
-            currentDestination = destination(KoraDestination.Calendar.route),
-            hasStudentId = false
+            currentDestination = destination(KoraDestination.StudentList.route)
         )
 
         assertFalse(shouldShow)
     }
 
     @Test
-    fun shouldShowBottomBar_returnsFalse_forNonBottomDestination() {
+    fun shouldShowBottomBar_returnsTrue_forReportsDestination() {
         val shouldShow = shouldShowBottomBar(
-            currentDestination = destination(KoraDestination.StudentList.route),
-            hasStudentId = true
+            currentDestination = destination(KoraDestination.Reports.route)
         )
 
-        assertFalse(shouldShow)
+        assertTrue(shouldShow)
     }
 
     private fun destination(route: String?): NavDestination? {

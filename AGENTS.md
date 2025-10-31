@@ -52,3 +52,12 @@ Organize all files according to the structure defined for `com.barutdev.kora` (d
 
 ## 8. Security & Configuration
 -   Do not commit secrets. `local.properties` must remain untracked.
+
+## Active Technologies
+- Kotlin (K2) targeting JVM 17 + Jetpack Compose Material 3, Kotlin Coroutines & Flow, Hilt, Room (existing) (001-add-reports-screen)
+- Room database (existing StudentRepository, LessonRepository) (001-add-reports-screen)
+- Kotlin (K2) targeting JDK 17 + Jetpack Compose Material 3, Navigation Compose, Hilt, Kotlin Coroutines/Flow (001-fix-reports-nav)
+- Room database (existing, no schema change) (001-fix-reports-nav)
+
+## Recent Changes
+- 001-add-reports-screen: Added Kotlin (K2) targeting JVM 17 + Jetpack Compose Material 3, Kotlin Coroutines & Flow, Hilt, Room (existing)

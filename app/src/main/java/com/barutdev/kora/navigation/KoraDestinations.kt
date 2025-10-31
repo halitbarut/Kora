@@ -48,6 +48,11 @@ internal sealed class KoraDestination(
         labelRes = R.string.homework_title
     )
 
+    object Reports : KoraDestination(
+        route = "reports",
+        labelRes = R.string.reports_tab_label
+    )
+
     object EditStudentProfile : StudentScoped(
         baseRoute = "student_profile",
         labelRes = R.string.student_profile_title
@@ -69,8 +74,8 @@ internal sealed class KoraDestination(
     )
 
     companion object {
-        val bottomBarDestinations: List<StudentScoped> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            listOf(Dashboard, Calendar, Homework)
+        val bottomBarDestinations: List<KoraDestination> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            listOf(Dashboard, Calendar, Homework, Reports)
         }
 
         fun fromRoute(route: String?): KoraDestination? = when (route) {
@@ -78,6 +83,7 @@ internal sealed class KoraDestination(
             Dashboard.route -> Dashboard
             Calendar.route -> Calendar
             Homework.route -> Homework
+            Reports.route -> Reports
             EditStudentProfile.route -> EditStudentProfile
             AddStudentProfile.route -> AddStudentProfile
             Settings.route -> Settings

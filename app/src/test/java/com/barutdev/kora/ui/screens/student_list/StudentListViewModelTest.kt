@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.student_list
 
+import androidx.lifecycle.viewModelScope
 import com.barutdev.kora.MainDispatcherRule
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
@@ -10,6 +11,7 @@ import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -29,7 +31,7 @@ class StudentListViewModelTest {
     val dispatcherRule = MainDispatcherRule()
 
     @Test
-    fun searchQueryFiltersStudentsCaseInsensitive() = runTest(dispatcherRule.dispatcher) {
+    fun searchQueryFiltersStudentsCaseInsensitive() = runTest {
         val viewModel = createViewModel()
 
         viewModel.uiState.first { it.hasAnyStudents }
@@ -39,10 +41,13 @@ class StudentListViewModelTest {
         assertEquals("Alice Johnson", state.students.single().student.fullName)
         assertTrue(state.isSearchActive)
         advanceUntilIdle()
+
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
     }
 
     @Test
-    fun clearingSearchRestoresFullList() = runTest(dispatcherRule.dispatcher) {
+    fun clearingSearchRestoresFullList() = runTest {
         val viewModel = createViewModel()
 
         viewModel.uiState.first { it.hasAnyStudents }
@@ -53,10 +58,13 @@ class StudentListViewModelTest {
         assertEquals(3, state.students.size)
         assertFalse(state.isSearchActive)
         advanceUntilIdle()
+
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
     }
 
     @Test
-    fun unmatchedQueryProducesEmptyFilteredListWhileKeepingAllStudentsFlag() = runTest(dispatcherRule.dispatcher) {
+    fun unmatchedQueryProducesEmptyFilteredListWhileKeepingAllStudentsFlag() = runTest {
         val viewModel = createViewModel()
 
         viewModel.uiState.first { it.hasAnyStudents }
@@ -65,6 +73,9 @@ class StudentListViewModelTest {
         assertTrue(state.isSearchActive)
         assertTrue(state.hasAnyStudents)
         assertTrue(state.students.isEmpty())
+        advanceUntilIdle()
+
+        viewModel.viewModelScope.cancel()
         advanceUntilIdle()
     }
 

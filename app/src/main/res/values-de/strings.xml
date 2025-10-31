@@ -240,4 +240,24 @@
     <string name="dashboard_mark_paid_confirm_message">Für den aktuellen Zeitraum wird eine Zahlung erfasst und abgeschlossene Stunden werden zurückgesetzt. Fortfahren?</string>
     <string name="dashboard_mark_paid_confirm">Bestätigen</string>
     <string name="dashboard_mark_paid_cancel">Abbrechen</string>
+
+    <!-- Reports -->
+    <string name="reports_title">Berichte</string>
+    <string name="reports_tab_label">Berichte</string>
+    <string name="reports_range_last_7_days">Letzte 7 Tage</string>
+    <string name="reports_range_this_month">Dieser Monat</string>
+    <string name="reports_range_last_30_days">Letzte 30 Tage</string>
+    <string name="reports_range_all_time">Gesamter Zeitraum</string>
+    <string name="reports_filters_title">Zeitraum</string>
+    <string name="reports_summary_total_earnings">Gesamteinnahmen</string>
+    <string name="reports_summary_total_hours">Gesamte Unterrichtsstunden</string>
+    <string name="reports_summary_active_students">Aktive Schüler</string>
+    <string name="reports_summary_hours_unit">%1$s Stunden</string>
+    <string name="reports_top_students_title">Top 3 Schüler</string>
+    <string name="reports_top_students_subtitle">Am aktivsten in diesem Zeitraum</string>
+    <string name="reports_top_students_empty">Für diesen Zeitraum wurden keine Schüler protokolliert.</string>
+    <string name="reports_chart_title">Einnahmen der letzten 6 Monate</string>
+    <string name="reports_chart_accessibility_bar">%1$s Einnahmen: %2$s</string>
+    <string name="reports_message_empty_period">Für diesen Zeitraum wurden keine Aktivitäten aufgezeichnet.</string>
+    <string name="reports_action_retry">Erneut versuchen</string>
 </resources>
