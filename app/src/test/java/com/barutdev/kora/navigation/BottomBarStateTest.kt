@@ -42,4 +42,20 @@ class BottomBarStateTest {
 
         assertEquals(8, state.lastStudentId(KoraDestination.Dashboard))
     }
+
+    @Test
+    fun lastKnownStudentId_tracksLatestStudentId() {
+        val state = BottomBarState()
+
+        assertNull(state.lastKnownStudentId())
+
+        state.record(KoraDestination.Calendar, studentId = 4)
+        assertEquals(4, state.lastKnownStudentId())
+
+        state.record(KoraDestination.Homework, studentId = 9)
+        assertEquals(9, state.lastKnownStudentId())
+
+        state.clear(KoraDestination.Homework)
+        assertEquals(9, state.lastKnownStudentId())
+    }
 }

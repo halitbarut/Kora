@@ -21,6 +21,7 @@ import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +40,7 @@ class HomeworkViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun switchingStudentId_invalidatesPreviousStudentData() = runTest(mainDispatcherRule.dispatcher) {
+    fun switchingStudentId_invalidatesPreviousStudentData() = runTest {
         val studentRepository = FakeStudentRepository().apply {
             setStudent(student(id = 1, name = "Ahmet"))
             setStudent(student(id = 2, name = "Mehmet"))
@@ -108,6 +109,8 @@ class HomeworkViewModelTest {
             viewModelJob?.cancel()
         }
         viewModelJob?.join()
+        advanceUntilIdle()
+        viewModel.viewModelScope.cancel()
         advanceUntilIdle()
     }
 

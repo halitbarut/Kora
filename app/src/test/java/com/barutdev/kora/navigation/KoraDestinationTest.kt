@@ -32,5 +32,7 @@ class KoraDestinationTest {
         assertEquals(0, items.indexOf(KoraDestination.Dashboard))
         assertEquals(1, items.indexOf(KoraDestination.Calendar))
         assertEquals(2, items.indexOf(KoraDestination.Homework))
+        assertEquals(3, items.indexOf(KoraDestination.Reports))
+        assertEquals(4, items.size)
     }
 }

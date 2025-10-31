@@ -240,4 +240,24 @@
     <string name="onboarding_get_started">Başla</string>
     <string name="onboarding_legal_title">Son bir adım</string>
     <string name="onboarding_legal_body">Devam etmek için politikalarımızı inceleyip kabul edin.</string>
+
+    <!-- Reports -->
+    <string name="reports_title">Raporlar</string>
+    <string name="reports_tab_label">Raporlar</string>
+    <string name="reports_range_last_7_days">Son 7 gün</string>
+    <string name="reports_range_this_month">Bu ay</string>
+    <string name="reports_range_last_30_days">Son 30 gün</string>
+    <string name="reports_range_all_time">Tüm zamanlar</string>
+    <string name="reports_filters_title">Tarih aralığı</string>
+    <string name="reports_summary_total_earnings">Toplam kazanç</string>
+    <string name="reports_summary_total_hours">Toplam ders saati</string>
+    <string name="reports_summary_active_students">Aktif öğrenciler</string>
+    <string name="reports_summary_hours_unit">%1$s saat</string>
+    <string name="reports_top_students_title">En aktif 3 öğrenci</string>
+    <string name="reports_top_students_subtitle">Bu dönem en aktif olanlar</string>
+    <string name="reports_top_students_empty">Bu dönem için öğrenci kaydı yok.</string>
+    <string name="reports_chart_title">Son 6 ayın kazançları</string>
+    <string name="reports_chart_accessibility_bar">%1$s kazancı: %2$s</string>
+    <string name="reports_message_empty_period">Bu dönem için faaliyet bulunmuyor.</string>
+    <string name="reports_action_retry">Tekrar dene</string>
 </resources>

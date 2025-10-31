@@ -198,6 +198,26 @@
     <string name="calendar_status_scheduled_needs_logging">Scheduled (Needs Logging)</string>
     <string name="calendar_status_cancelled">Cancelled</string>
 
+    <!-- Reports Screen -->
+    <string name="reports_title">Reports</string>
+    <string name="reports_tab_label">Reports</string>
+    <string name="reports_range_last_7_days">Last 7 days</string>
+    <string name="reports_range_this_month">This month</string>
+    <string name="reports_range_last_30_days">Last 30 days</string>
+    <string name="reports_range_all_time">All time</string>
+    <string name="reports_filters_title">Date range</string>
+    <string name="reports_summary_total_earnings">Total earnings</string>
+    <string name="reports_summary_total_hours">Total hours taught</string>
+    <string name="reports_summary_active_students">Active students</string>
+    <string name="reports_summary_hours_unit">%1$s hours</string>
+    <string name="reports_top_students_title">Top 3 students</string>
+    <string name="reports_top_students_subtitle">Most active this period</string>
+    <string name="reports_top_students_empty">No students logged for this period.</string>
+    <string name="reports_chart_title">Earnings last 6 months</string>
+    <string name="reports_chart_accessibility_bar">%1$s earnings: %2$s</string>
+    <string name="reports_message_empty_period">No activity recorded for this period.</string>
+    <string name="reports_action_retry">Try again</string>
+
     <!-- Edit Student Dialog -->
     <string name="edit_student_dialog_title">Edit Student</string>
     <string name="edit_student_section_header">Edit Student</string>

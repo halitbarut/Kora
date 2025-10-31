@@ -2,9 +2,11 @@ package com.barutdev.kora.navigation
 
 internal class BottomBarState {
     private val lastStudentIds = mutableMapOf<KoraDestination.StudentScoped, Int>()
+    private var lastRecordedStudentId: Int? = null
 
     fun record(destination: KoraDestination.StudentScoped, studentId: Int) {
         lastStudentIds[destination] = studentId
+        lastRecordedStudentId = studentId
     }
 
     fun shouldRestore(destination: KoraDestination.StudentScoped, studentId: Int?): Boolean {
@@ -17,4 +19,6 @@ internal class BottomBarState {
     }
 
     fun lastStudentId(destination: KoraDestination.StudentScoped): Int? = lastStudentIds[destination]
+
+    fun lastKnownStudentId(): Int? = lastRecordedStudentId
 }

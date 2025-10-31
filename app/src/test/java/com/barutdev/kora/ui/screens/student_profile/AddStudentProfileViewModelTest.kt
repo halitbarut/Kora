@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.student_profile
 
+import androidx.lifecycle.viewModelScope
 import com.barutdev.kora.MainDispatcherRule
 import com.barutdev.kora.domain.model.Student
 import com.barutdev.kora.domain.model.StudentProfileUpdate
@@ -8,6 +9,7 @@ import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -25,7 +27,7 @@ class AddStudentProfileViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun savingValidStudentUsesDefaultRateWhenCustomBlank() = runTest(mainDispatcherRule.dispatcher) {
+    fun savingValidStudentUsesDefaultRateWhenCustomBlank() = runTest {
         val studentRepository = RecordingStudentRepository()
         val preferencesRepository = StubUserPreferencesRepository(
             initial = UserPreferences(
@@ -57,10 +59,13 @@ class AddStudentProfileViewModelTest {
         assertEquals("Charlie Brown", savedStudent.fullName)
         assertEquals(85.0, savedStudent.hourlyRate, 0.0)
         assertNull(savedStudent.customHourlyRate)
+
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
     }
 
     @Test
-    fun repositoryFailureEmitsSaveFailed() = runTest(mainDispatcherRule.dispatcher) {
+    fun repositoryFailureEmitsSaveFailed() = runTest {
         val studentRepository = RecordingStudentRepository(shouldFail = true)
         val preferencesRepository = StubUserPreferencesRepository(
             initial = UserPreferences(
@@ -89,6 +94,9 @@ class AddStudentProfileViewModelTest {
 
         assertEquals(StudentProfileEvent.SaveFailed, event.await())
         assertEquals(0, studentRepository.addedStudents.size)
+
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
     }
 }
 
