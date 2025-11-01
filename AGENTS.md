@@ -58,6 +58,8 @@ Organize all files according to the structure defined for `com.barutdev.kora` (d
 - Room database (existing StudentRepository, LessonRepository) (001-add-reports-screen)
 - Kotlin (K2) targeting JDK 17 + Jetpack Compose Material 3, Navigation Compose, Hilt, Kotlin Coroutines/Flow (001-fix-reports-nav)
 - Room database (existing, no schema change) (001-fix-reports-nav)
+- Kotlin (K2) targeting JVM 17 + Jetpack Compose Material 3, Hilt, Kotlin Coroutines & Flow, Room (KSP), Navigation Compose (004-refactor-reports-entry-point)
+- Room database with KSP processors (no KAPT) (004-refactor-reports-entry-point)
 
 ## Recent Changes
 - 001-add-reports-screen: Added Kotlin (K2) targeting JVM 17 + Jetpack Compose Material 3, Kotlin Coroutines & Flow, Hilt, Room (existing)

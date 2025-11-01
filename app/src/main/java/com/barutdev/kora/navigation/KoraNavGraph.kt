@@ -227,9 +227,6 @@ fun KoraNavGraph(
                                         )
                                     }
                                 }
-                                KoraDestination.Reports -> {
-                                    navController.navigateToReports()
-                                }
                                 else -> Unit
                             }
                         }
@@ -365,7 +362,11 @@ fun KoraNavGraph(
                             navController.navigate(
                                 KoraDestination.EditStudentProfile.createRoute(studentId)
                             )
-                        }
+                        },
+                        onNavigateToReports = {
+                            navController.navigateToReports()
+                        },
+                        onNavigateToSettings = onNavigateToSettings
                     )
                 }
 
