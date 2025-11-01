@@ -82,6 +82,13 @@
   Fill them out with the right functional requirements.
 -->
 
+**Constitution Guardrails**:
+- Map each requirement to the affected Clean Architecture layer (UI → ViewModel → UseCase → Repository → DataSource).
+- Specify Compose Material 3 components and theming updates; list every new user-facing string key for localization.
+- Document coroutine/Flow expectations for async work and note any adapters for external callbacks.
+- Record Room (KSP) schema or DAO impacts, including migrations and immutable model updates.
+- Confirm Hilt modules/bindings and Navigation Compose destinations touched by the feature.
+
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]

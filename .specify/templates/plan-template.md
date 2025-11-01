@@ -3,7 +3,7 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/scripts/bash/setup-plan.sh` for the execution workflow.
 
 ## Summary
 
@@ -11,31 +11,25 @@
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Kotlin (K2) targeting JVM 17  
+**Primary Dependencies**: Jetpack Compose Material 3, Hilt, Kotlin Coroutines & Flow, Room (KSP), Navigation Compose  
+**Storage**: Room database with KSP processors (no KAPT)  
+**Testing**: JUnit, kotlinx-coroutines-test, Compose UI tests, Room in-memory tests  
+**Target Platform**: Android (per app `minSdk`) with Compose-only UI layer  
+**Project Type**: Android mobile app using Clean Architecture (UI → ViewModel → UseCase → Repository → DataSource)  
+**Performance Goals**: 60fps UI, <150ms state propagation, resilient offline persistence  
+**Constraints**: No XML layouts, no alternative DI/navigation stacks, immutable data models, strings in `strings.xml`  
+**Scale/Scope**: Multi-screen tutor management workflows within `com.barutdev.kora`
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-1. Document how the feature respects the UI → ViewModel → UseCase → Repository → DataSource chain.
-2. Confirm every UI addition uses Jetpack Compose with Material 3 theming (no XML layouts).
-3. Show coroutine/Flow usage for async work and confirm Kotlin/JDK 17 compatibility.
-4. Detail Room entities, DAOs, migrations, and the Hilt bindings that support the feature.
-5. Capture localization requirements, string resources, navigation destinations, and immutable data models.
+- Map every feature to the UI → ViewModel → UseCase → Repository → DataSource flow without bypasses.
+- Confirm UI work is Compose + Material 3 only; identify shared theme or design token updates.
+- Document coroutine/Flow usage for async paths and any adapter needed for legacy callbacks.
+- Describe Room (KSP) persistence impacts, immutable models, and migration strategy updates.
+- Note Hilt modules/bindings, Navigation Compose destinations, and required `strings.xml` additions.
 
 ## Project Structure
 
@@ -55,25 +49,27 @@ specs/[###-feature]/
 
 ```text
 app/
-├── src/
-│   ├── main/
-│   │   ├── java/com/barutdev/kora/ui/
-│   │   ├── java/com/barutdev/kora/viewmodel/
-│   │   ├── java/com/barutdev/kora/domain/
-│   │   ├── java/com/barutdev/kora/data/
-│   │   ├── java/com/barutdev/kora/navigation/
-│   │   └── res/values/strings.xml
-│   ├── androidTest/
-│   └── test/
-├── build.gradle.kts
-└── proguard-rules.pro
+├── src/main/java/com/barutdev/kora/
+│   ├── data/
+│   │   ├── datasource/
+│   │   └── repository/
+│   ├── di/
+│   ├── domain/
+│   │   ├── model/
+│   │   └── usecase/
+│   ├── navigation/
+│   └── ui/
+│       ├── components/
+│       └── screens/
+└── src/main/res/
+    ├── values/strings.xml
+    └── values-*/strings.xml
 
-gradle/libs.versions.toml          # version catalog for dependencies/plugins
-docs/                              # governance, specs, research, and audits
+app/src/androidTest/...
+app/src/test/...
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Reference affected packages/files within this structure and describe any new feature subpackages added for the work.
 
 ## Complexity Tracking
 
