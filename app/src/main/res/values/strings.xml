@@ -177,6 +177,16 @@
     <string name="notification_default_message">You have a new reminder from Kora.</string>
     <string name="notification_log_reminder_message">Don\'t forget to log any lessons you had today.</string>
 
+    <!-- Context-Aware Notification System -->
+    <string name="notification_lesson_reminder_title_new">Upcoming Lesson: %1$s</string>
+    <string name="notification_lesson_reminder_content">Your lesson is today at %1$s. Don\'t forget to prepare!</string>
+    <string name="notification_note_reminder_title">Log Lesson Notes: %1$s</string>
+    <string name="notification_note_reminder_content">Add your notes and observations for the lesson you had today at %1$s.</string>
+    <string name="channel_lesson_reminders_name">Lesson Reminders</string>
+    <string name="channel_lesson_reminders_desc">Notifications to prepare for upcoming lessons</string>
+    <string name="channel_lesson_notes_name">Lesson Notes</string>
+    <string name="channel_lesson_notes_desc">Reminders to log notes for completed lessons</string>
+
     <!-- Calendar Screen -->
     <string name="calendar_month_year_title">%1$s %2$d</string>
     <string name="calendar_previous_month_content_description">Previous month</string>

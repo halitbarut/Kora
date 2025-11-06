@@ -9,8 +9,7 @@ import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
-import com.barutdev.kora.notifications.AlarmScheduler
-import com.barutdev.kora.notifications.LessonReminderType
+import com.barutdev.kora.domain.usecase.notification.RescheduleAllNotificationAlarmsUseCase
 import com.barutdev.kora.util.SmartLocaleDefaults
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
@@ -28,7 +27,7 @@ import kotlinx.coroutines.flow.first
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val alarmScheduler: AlarmScheduler,
+    private val rescheduleAllNotificationAlarmsUseCase: RescheduleAllNotificationAlarmsUseCase,
     private val dataBackupManager: DataBackupManager,
     private val lessonRepository: LessonRepository,
     private val studentRepository: StudentRepository
@@ -136,44 +135,21 @@ class SettingsViewModel @Inject constructor(
     fun updateLogReminderEnabled(isEnabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.updateLogReminderEnabled(isEnabled)
-            if (isEnabled) {
-                val nextTrigger = nextLogReminderTrigger()
-                val preferences = userPreferences.value
-                alarmScheduler.scheduleDailyLogReminder(
-                    triggerAtMillis = nextTrigger,
-                    languageCode = preferences.languageCode,
-                    hour = preferences.logReminderHour,
-                    minute = preferences.logReminderMinute
-                )
-            } else {
-                alarmScheduler.cancelDailyLogReminder()
-            }
+            rescheduleAllNotificationAlarmsUseCase()
         }
     }
 
     fun updateLessonReminderTime(hour: Int, minute: Int) {
         viewModelScope.launch {
             userPreferencesRepository.updateLessonReminderTime(hour, minute)
-            if (userPreferences.value.lessonRemindersEnabled) {
-                rescheduleAllLessonReminders(hour, minute, userPreferences.value.languageCode)
-            }
+            rescheduleAllNotificationAlarmsUseCase()
         }
     }
 
     fun updateLogReminderTime(hour: Int, minute: Int) {
         viewModelScope.launch {
             userPreferencesRepository.updateLogReminderTime(hour, minute)
-            if (userPreferences.value.logReminderEnabled) {
-                alarmScheduler.cancelDailyLogReminder()
-                val languageCode = userPreferences.value.languageCode
-                val triggerAt = nextLogReminderTrigger(hour, minute)
-                alarmScheduler.scheduleDailyLogReminder(
-                    triggerAtMillis = triggerAt,
-                    languageCode = languageCode,
-                    hour = hour,
-                    minute = minute
-                )
-            }
+            rescheduleAllNotificationAlarmsUseCase()
         }
     }
 
@@ -182,105 +158,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun importCsv(csv: String): Result<Unit> = runCatching {
-        val existingLessons = lessonRepository.getAllLessons().first()
-        existingLessons.forEach { lesson ->
-            alarmScheduler.cancelAllLessonReminders(lesson.id)
-        }
         dataBackupManager.importFromCsv(csv)
-        val preferences = userPreferences.value
-        if (preferences.lessonRemindersEnabled) {
-            rescheduleAllLessonReminders(
-                hour = preferences.lessonReminderHour,
-                minute = preferences.lessonReminderMinute,
-                languageCode = preferences.languageCode
-            )
-        }
-        if (preferences.logReminderEnabled) {
-            alarmScheduler.cancelDailyLogReminder()
-            val triggerAt = nextLogReminderTrigger(
-                hour = preferences.logReminderHour,
-                minute = preferences.logReminderMinute
-            )
-            alarmScheduler.scheduleDailyLogReminder(
-                triggerAtMillis = triggerAt,
-                languageCode = preferences.languageCode,
-                hour = preferences.logReminderHour,
-                minute = preferences.logReminderMinute
-            )
-        }
+        rescheduleAllNotificationAlarmsUseCase()
     }
 
     suspend fun resetAllData(): Result<Unit> = runCatching {
-        val lessons = lessonRepository.getAllLessons().first()
-        lessons.forEach { lesson ->
-            alarmScheduler.cancelAllLessonReminders(lesson.id)
-        }
-        alarmScheduler.cancelDailyLogReminder()
         dataBackupManager.clearAllData()
         userPreferencesRepository.resetPreferences()
-    }
-
-    private fun nextLogReminderTrigger(): Long {
-        val preferences = userPreferences.value
-        return nextLogReminderTrigger(preferences.logReminderHour, preferences.logReminderMinute)
-    }
-
-    private fun nextLogReminderTrigger(hour: Int, minute: Int): Long {
-        val zoneId = ZoneId.systemDefault()
-        val now = ZonedDateTime.now(zoneId)
-        var triggerDateTime = now.withHour(hour)
-            .withMinute(minute)
-            .withSecond(0)
-            .withNano(0)
-        if (triggerDateTime.isBefore(now)) {
-            triggerDateTime = triggerDateTime.plusDays(1)
-        }
-        return triggerDateTime.toInstant().toEpochMilli()
-    }
-
-    private suspend fun rescheduleAllLessonReminders(
-        hour: Int,
-        minute: Int,
-        languageCode: String
-    ) {
-        val lessons = lessonRepository.getAllLessons().first()
-        if (lessons.isEmpty()) return
-        val students = studentRepository.getAllStudents().first()
-            .associateBy { it.id }
-        val zoneId = ZoneId.systemDefault()
-        lessons.filter { it.status == LessonStatus.SCHEDULED }.forEach { lesson ->
-            alarmScheduler.cancelAllLessonReminders(lesson.id)
-            val studentName = students[lesson.studentId]?.fullName ?: return@forEach
-            val lessonDateTime = Instant.ofEpochMilli(lesson.date).atZone(zoneId)
-            val dayOfTrigger = lessonDateTime
-                .withHour(hour)
-                .withMinute(minute)
-                .withSecond(0)
-                .withNano(0)
-                .toInstant()
-                .toEpochMilli()
-            alarmScheduler.scheduleLessonReminder(
-                lessonId = lesson.id,
-                type = LessonReminderType.DAY_OF,
-                triggerAtMillis = dayOfTrigger,
-                studentName = studentName,
-                languageCode = languageCode
-            )
-            val dayBeforeTrigger = lessonDateTime.minusDays(1)
-                .withHour(hour)
-                .withMinute(minute)
-                .withSecond(0)
-                .withNano(0)
-                .toInstant()
-                .toEpochMilli()
-            alarmScheduler.scheduleLessonReminder(
-                lessonId = lesson.id,
-                type = LessonReminderType.DAY_BEFORE,
-                triggerAtMillis = dayBeforeTrigger,
-                studentName = studentName,
-                languageCode = languageCode
-            )
-        }
+        // All alarms are automatically cancelled when lessons are deleted
     }
 
 }

@@ -43,4 +43,49 @@ interface LessonDao {
 
     @Query("DELETE FROM lessons")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM lessons WHERE id = :lessonId")
+    suspend fun deleteLesson(lessonId: Int)
+
+    // Context-aware notification queries
+
+    /**
+     * Returns lessons for a specific date range (day start to day end).
+     * @param startOfDay Timestamp for start of day (00:00:00)
+     * @param endOfDay Timestamp for end of day (23:59:59)
+     */
+    @Query("SELECT * FROM lessons WHERE date >= :startOfDay AND date <= :endOfDay")
+    fun getLessonsForDateRange(startOfDay: Long, endOfDay: Long): Flow<List<LessonEntity>>
+
+    /**
+     * Returns completed lessons for a specific date range.
+     */
+    @Query(
+        "SELECT * FROM lessons WHERE date >= :startOfDay AND date <= :endOfDay " +
+            "AND status = :completedStatus"
+    )
+    fun getCompletedLessonsForDateRange(
+        startOfDay: Long,
+        endOfDay: Long,
+        completedStatus: LessonStatus = LessonStatus.COMPLETED
+    ): Flow<List<LessonEntity>>
+
+    /**
+     * Returns a single lesson by ID.
+     */
+    @Query("SELECT * FROM lessons WHERE id = :lessonId")
+    suspend fun getLessonById(lessonId: Int): LessonEntity?
+
+    /**
+     * Returns active lessons (not cancelled, scheduled >= today).
+     * @param currentDate Current date timestamp
+     */
+    @Query(
+        "SELECT * FROM lessons WHERE date >= :currentDate " +
+            "AND status != :cancelledStatus"
+    )
+    fun getActiveLessons(
+        currentDate: Long,
+        cancelledStatus: LessonStatus = LessonStatus.CANCELLED
+    ): Flow<List<LessonEntity>>
 }
