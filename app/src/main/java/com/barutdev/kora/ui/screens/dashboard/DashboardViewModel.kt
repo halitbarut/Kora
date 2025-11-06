@@ -24,8 +24,8 @@ import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.PaymentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import com.barutdev.kora.domain.usecase.GenerateAiInsightsUseCase
+import com.barutdev.kora.domain.usecase.notification.CancelNotificationAlarmsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
-import com.barutdev.kora.notifications.AlarmScheduler
 import com.barutdev.kora.ui.model.AiInsightsUiState
 import com.barutdev.kora.ui.model.AiStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -93,7 +93,7 @@ class DashboardViewModel @Inject constructor(
     private val homeworkRepository: HomeworkRepository,
     private val aiInsightsCacheRepository: AiInsightsCacheRepository,
     private val aiInsightsGenerationTracker: AiInsightsGenerationTracker,
-    private val alarmScheduler: AlarmScheduler,
+    private val cancelNotificationAlarmsUseCase: CancelNotificationAlarmsUseCase,
     private val generateAiInsightsUseCase: GenerateAiInsightsUseCase,
     private val paymentRepository: PaymentRepository,
     private val userPreferencesRepository: UserPreferencesRepository
@@ -662,7 +662,7 @@ class DashboardViewModel @Inject constructor(
             notes = notes.trim().takeIf { it.isNotBlank() }
         )
         lessonRepository.updateLesson(updatedLesson)
-        alarmScheduler.cancelAllLessonReminders(lessonId)
+        cancelNotificationAlarmsUseCase(lessonId)
         clearLogLessonSelection()
     }
 
@@ -674,7 +674,7 @@ class DashboardViewModel @Inject constructor(
             notes = notes.trim().takeIf { it.isNotBlank() }
         )
         lessonRepository.updateLesson(updatedLesson)
-        alarmScheduler.cancelAllLessonReminders(lessonId)
+        cancelNotificationAlarmsUseCase(lessonId)
         clearLogLessonSelection()
     }
 

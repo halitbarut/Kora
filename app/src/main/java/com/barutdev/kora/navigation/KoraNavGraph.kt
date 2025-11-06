@@ -56,6 +56,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.barutdev.kora.R
 import com.barutdev.kora.ui.navigation.BottomNavPreloadViewModel
@@ -417,7 +418,12 @@ fun KoraNavGraph(
 
                 composable(
                     route = KoraDestination.Calendar.route,
-                    arguments = KoraDestination.Calendar.arguments()
+                    arguments = KoraDestination.Calendar.arguments(),
+                    deepLinks = listOf(
+                        navDeepLink {
+                            uriPattern = "app://kora/studentCalendar/{$STUDENT_ID_ARG}"
+                        }
+                    )
                 ) { backStackEntry ->
                     val studentId = backStackEntry.requireStudentId()
                     Log.d(
