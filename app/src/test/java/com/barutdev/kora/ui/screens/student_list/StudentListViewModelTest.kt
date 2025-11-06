@@ -168,6 +168,8 @@ private class FakeLessonRepository(
 
     override suspend fun updateLesson(lesson: Lesson) = error("Not needed in tests")
 
+    override suspend fun deleteLesson(lessonId: Int) = error("Not needed in tests")
+
     override suspend fun markCompletedLessonsAsPaid(studentId: Int) = error("Not needed in tests")
 }
 

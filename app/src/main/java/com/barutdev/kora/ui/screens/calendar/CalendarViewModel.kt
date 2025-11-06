@@ -9,8 +9,8 @@ import com.barutdev.kora.domain.model.LessonStatus
 import com.barutdev.kora.domain.repository.LessonRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
-import com.barutdev.kora.notifications.AlarmScheduler
-import com.barutdev.kora.notifications.LessonReminderType
+import com.barutdev.kora.domain.usecase.notification.CancelNotificationAlarmsUseCase
+import com.barutdev.kora.domain.usecase.notification.ScheduleNotificationAlarmsUseCase
 import com.barutdev.kora.navigation.STUDENT_ID_ARG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
@@ -33,7 +33,8 @@ class CalendarViewModel @Inject constructor(
     private val studentRepository: StudentRepository,
     private val lessonRepository: LessonRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val alarmScheduler: AlarmScheduler
+    private val scheduleNotificationAlarmsUseCase: ScheduleNotificationAlarmsUseCase,
+    private val cancelNotificationAlarmsUseCase: CancelNotificationAlarmsUseCase
 ) : ViewModel() {
 
     val studentId: Int? = savedStateHandle[STUDENT_ID_ARG]
@@ -95,7 +96,7 @@ class CalendarViewModel @Inject constructor(
         selectedDateState.value = date
     }
 
-    suspend fun scheduleLesson(date: Long) {
+    suspend fun saveLesson(date: Long) {
         val targetStudentId = studentId ?: return
         val lesson = Lesson(
             id = 0,
@@ -106,22 +107,14 @@ class CalendarViewModel @Inject constructor(
             notes = null
         )
         val lessonId = lessonRepository.insertLesson(lesson)
-        val preferences = userPreferencesRepository.userPreferences.first()
-        if (!preferences.lessonRemindersEnabled) {
-            return
+        scheduleNotificationAlarmsUseCase(lessonId)
+    }
+
+    fun deleteLesson(lessonId: Int) {
+        viewModelScope.launch {
+            cancelNotificationAlarmsUseCase(lessonId)
+            lessonRepository.deleteLesson(lessonId)
         }
-
-        val studentName = studentRepository.getStudentById(targetStudentId).first()?.fullName
-            ?: return
-
-        scheduleLessonReminders(
-            lessonId = lessonId,
-            lessonDateMillis = date,
-            studentName = studentName,
-            languageCode = preferences.languageCode,
-            reminderHour = preferences.lessonReminderHour,
-            reminderMinute = preferences.lessonReminderMinute
-        )
     }
 
     fun onLogLessonClicked(lesson: Lesson) {
@@ -160,7 +153,7 @@ class CalendarViewModel @Inject constructor(
             notes = notes.trim().takeIf { it.isNotBlank() }
         )
         lessonRepository.updateLesson(updatedLesson)
-        alarmScheduler.cancelAllLessonReminders(lessonId)
+        cancelNotificationAlarmsUseCase(lessonId)
         clearLogLessonSelection()
     }
 
@@ -172,56 +165,12 @@ class CalendarViewModel @Inject constructor(
             notes = notes.trim().takeIf { it.isNotBlank() }
         )
         lessonRepository.updateLesson(updatedLesson)
-        alarmScheduler.cancelAllLessonReminders(lessonId)
+        cancelNotificationAlarmsUseCase(lessonId)
         clearLogLessonSelection()
     }
 
     private fun clearLogLessonSelection() {
         logLessonDialogVisibility.value = false
         selectedLessonForLogging.value = null
-    }
-
-    private fun scheduleLessonReminders(
-        lessonId: Int,
-        lessonDateMillis: Long,
-        studentName: String,
-        languageCode: String,
-        reminderHour: Int,
-        reminderMinute: Int
-    ) {
-        val lessonDateTime = Instant.ofEpochMilli(lessonDateMillis).atZone(zoneId)
-
-        val dayOfTrigger = lessonDateTime
-            .withHour(reminderHour)
-            .withMinute(reminderMinute)
-            .withSecond(0)
-            .withNano(0)
-            .toInstant()
-            .toEpochMilli()
-
-        alarmScheduler.scheduleLessonReminder(
-            lessonId = lessonId,
-            type = LessonReminderType.DAY_OF,
-            triggerAtMillis = dayOfTrigger,
-            studentName = studentName,
-            languageCode = languageCode
-        )
-
-        val dayBeforeDateTime = lessonDateTime.minusDays(1)
-        val dayBeforeTrigger = dayBeforeDateTime
-            .withHour(reminderHour)
-            .withMinute(reminderMinute)
-            .withSecond(0)
-            .withNano(0)
-            .toInstant()
-            .toEpochMilli()
-
-        alarmScheduler.scheduleLessonReminder(
-            lessonId = lessonId,
-            type = LessonReminderType.DAY_BEFORE,
-            triggerAtMillis = dayBeforeTrigger,
-            studentName = studentName,
-            languageCode = languageCode
-        )
     }
 }
