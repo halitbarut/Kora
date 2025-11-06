@@ -177,7 +177,7 @@ fun CalendarScreen(
                     .toInstant()
                     .toEpochMilli()
                 coroutineScope.launch {
-                    viewModel.scheduleLesson(epochMillis)
+                    viewModel.saveLesson(epochMillis)
                     snackbarHostState.showSnackbar(message = scheduledMessage)
                 }
             },

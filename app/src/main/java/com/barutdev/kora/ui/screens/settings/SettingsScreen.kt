@@ -75,8 +75,11 @@ import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.util.formatCurrency
+import android.Manifest
 import android.text.format.DateFormat
 import android.util.Log
+import android.content.pm.PackageManager
+import android.os.Build
 import java.io.IOException
 import java.time.LocalTime
 import java.time.LocalDateTime
@@ -85,6 +88,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import kotlin.text.Charsets
 
@@ -129,6 +133,60 @@ fun SettingsScreen(
     var showResetConfirmation by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val notificationPermissionRequest = remember { mutableStateOf<NotificationToggle?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val pendingToggle = notificationPermissionRequest.value
+        notificationPermissionRequest.value = null
+        when (pendingToggle) {
+            NotificationToggle.LESSON_REMINDER -> {
+                if (granted) {
+                    viewModel.updateLessonRemindersEnabled(true)
+                } else {
+                    viewModel.updateLessonRemindersEnabled(false)
+                }
+            }
+            NotificationToggle.LOG_REMINDER -> {
+                if (granted) {
+                    viewModel.updateLogReminderEnabled(true)
+                } else {
+                    viewModel.updateLogReminderEnabled(false)
+                }
+            }
+            null -> Unit
+        }
+    }
+    val handleNotificationToggle: (Boolean, NotificationToggle) -> Unit = { isEnabled, toggle ->
+        if (!isEnabled) {
+            when (toggle) {
+                NotificationToggle.LESSON_REMINDER -> viewModel.updateLessonRemindersEnabled(false)
+                NotificationToggle.LOG_REMINDER -> viewModel.updateLogReminderEnabled(false)
+            }
+        } else {
+            val needsRuntimePermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            if (!needsRuntimePermission) {
+                when (toggle) {
+                    NotificationToggle.LESSON_REMINDER -> viewModel.updateLessonRemindersEnabled(true)
+                    NotificationToggle.LOG_REMINDER -> viewModel.updateLogReminderEnabled(true)
+                }
+            } else {
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+                if (hasPermission) {
+                    when (toggle) {
+                        NotificationToggle.LESSON_REMINDER -> viewModel.updateLessonRemindersEnabled(true)
+                        NotificationToggle.LOG_REMINDER -> viewModel.updateLogReminderEnabled(true)
+                    }
+                } else {
+                    notificationPermissionRequest.value = toggle
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+    }
     val backupSuccessMessage = koraStringResource(id = R.string.settings_backup_success)
     val backupFailureMessage = koraStringResource(id = R.string.settings_backup_failure)
     val restoreSuccessMessage = koraStringResource(id = R.string.settings_restore_success)
@@ -325,7 +383,9 @@ fun SettingsScreen(
                     iconContentDescription = koraStringResource(id = R.string.settings_lesson_reminders_content_description),
                     title = koraStringResource(id = R.string.settings_lesson_reminders_label),
                     checked = userPreferences.lessonRemindersEnabled,
-                    onCheckedChange = viewModel::updateLessonRemindersEnabled
+                    onCheckedChange = { isEnabled ->
+                        handleNotificationToggle(isEnabled, NotificationToggle.LESSON_REMINDER)
+                    }
                 )
                 SettingsDivider()
                 SettingSwitchRow(
@@ -333,7 +393,9 @@ fun SettingsScreen(
                     iconContentDescription = koraStringResource(id = R.string.settings_log_reminder_content_description),
                     title = koraStringResource(id = R.string.settings_log_reminder_label),
                     checked = userPreferences.logReminderEnabled,
-                    onCheckedChange = viewModel::updateLogReminderEnabled
+                    onCheckedChange = { isEnabled ->
+                        handleNotificationToggle(isEnabled, NotificationToggle.LOG_REMINDER)
+                    }
                 )
                 SettingsDivider()
                 SettingNavigationRow(
@@ -806,6 +868,11 @@ private fun formatHourlyRate(amount: Double, currencyCode: String): String {
     return remember(amount, currencyCode) {
         formatCurrency(amount, currencyCode)
     }
+}
+
+private enum class NotificationToggle {
+    LESSON_REMINDER,
+    LOG_REMINDER
 }
 
 private fun formatReminderTime(hour: Int, minute: Int, locale: Locale): String {
