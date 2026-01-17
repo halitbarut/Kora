@@ -65,8 +65,22 @@ gradle-home/
 /*.apk
 *.log
 
-# Codex/temporary AI files
+# AI Agent configurations (all agents)
+.agent/
+.claude/
+.codex/
+.specify/
+.windsurf/
+.github/
+AGENTS.md
+CLAUDE.md
 CODEX.md
+WARP.md
+
+# Reference/spec files (development only)
+specs/
+openspec/
+screen_reference/
 
 # Build artifacts (all modules and depths)
 **/build/
@@ -95,12 +109,3 @@ secrets.properties
 ehthumbs.db
 .Spotlight-V100
 .Trashes
-
-# OpenSpec temporary files
-openspec/tmp/
-openspec/cache/
-openspec/changes/*/tasks.md.backup
-openspec/changes/*/.history/
-
-# Codex agent-specific files
-.codex/
