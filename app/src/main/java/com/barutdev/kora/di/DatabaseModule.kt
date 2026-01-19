@@ -6,6 +6,7 @@ import com.barutdev.kora.data.local.AiInsightDao
 import com.barutdev.kora.data.local.HomeworkDao
 import com.barutdev.kora.data.local.KoraDatabase
 import com.barutdev.kora.data.local.LessonDao
+import com.barutdev.kora.data.local.PaymentRecordDao
 import com.barutdev.kora.data.local.StudentDao
 import com.barutdev.kora.data.local.migrations.MIGRATION_7_8
 import dagger.Module
@@ -61,5 +62,5 @@ object DatabaseModule {
     @Singleton
     fun providePaymentRecordDao(
         database: KoraDatabase
-    ): com.barutdev.kora.data.local.PaymentRecordDao = database.paymentRecordDao()
+    ): PaymentRecordDao = database.paymentRecordDao()
 }

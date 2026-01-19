@@ -192,6 +192,14 @@ private class FakeLessonRepository : LessonRepository {
     override suspend fun deleteLesson(lessonId: Int) = error("Not needed")
 
     override suspend fun markCompletedLessonsAsPaid(studentId: Int) = error("Not needed")
+
+    override fun getLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("Not needed")
+
+    override fun getCompletedLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("Not needed")
+
+    override suspend fun getLessonWithStudent(lessonId: Int): com.barutdev.kora.domain.model.LessonWithStudent? = error("Not needed")
+
+    override fun getActiveLessons(): Flow<List<Lesson>> = error("Not needed")
 }
 
 private class FakeAiInsightsCacheRepository : AiInsightsCacheRepository {

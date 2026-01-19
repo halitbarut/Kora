@@ -103,6 +103,8 @@ class StudentRepositoryImplTest {
 
         override fun getStudentById(id: Int): Flow<StudentEntity?> = emptyFlow()
 
+        override suspend fun getStudentByIdSnapshot(id: Int): StudentEntity? = null
+
         override fun getAllStudents(): Flow<List<StudentEntity>> = emptyFlow()
 
         override suspend fun updateStudentHourlyRate(studentId: Int, newRate: Double) {
