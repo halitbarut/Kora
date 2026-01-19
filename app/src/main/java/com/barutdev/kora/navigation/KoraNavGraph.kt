@@ -707,8 +707,7 @@ internal fun resolveSlideDirection(
 
 private fun NavDestination?.isBottomBarDestination(): Boolean {
     val route = this?.route ?: return false
-    if (this.asStudentScopedDestination() != null) return true
-    return route == KoraDestination.Reports.route
+    return this.asStudentScopedDestination() != null
 }
 
 private fun NavDestination?.asStudentScopedDestination(): KoraDestination.StudentScoped? =

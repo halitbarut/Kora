@@ -75,7 +75,7 @@ internal sealed class KoraDestination(
 
     companion object {
         val bottomBarDestinations: List<KoraDestination> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            listOf(Dashboard, Calendar, Homework, Reports)
+            listOf(Dashboard, Calendar, Homework)
         }
 
         fun fromRoute(route: String?): KoraDestination? = when (route) {
@@ -93,6 +93,9 @@ internal sealed class KoraDestination(
 
         fun studentScopedFromRoute(route: String?): StudentScoped? {
             if (route == null) return null
+            // AddStudentProfile uses "student_profile/add" which starts with EditStudentProfile.baseRoute
+            // so we must exclude it explicitly before checking EditStudentProfile
+            if (route == AddStudentProfile.route) return null
             return when {
                 route == Dashboard.route || route.startsWith("${Dashboard.baseRoute}/") -> Dashboard
                 route == Calendar.route || route.startsWith("${Calendar.baseRoute}/") -> Calendar
