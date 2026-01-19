@@ -75,7 +75,7 @@ internal sealed class KoraDestination(
 
     companion object {
         val bottomBarDestinations: List<KoraDestination> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            listOf(Dashboard, Calendar, Homework)
+            listOf(Dashboard, Calendar, Homework, Reports)
         }
 
         fun fromRoute(route: String?): KoraDestination? = when (route) {

@@ -74,6 +74,11 @@ private class RecordingLessonRepository : LessonRepository {
     override suspend fun insertLesson(lesson: Lesson): Int = error("unused")
     override suspend fun updateLesson(lesson: Lesson) = error("unused")
     override suspend fun markCompletedLessonsAsPaid(studentId: Int) = error("unused")
+    override suspend fun deleteLesson(lessonId: Int) = error("unused")
+    override fun getLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("unused")
+    override fun getCompletedLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("unused")
+    override suspend fun getLessonWithStudent(lessonId: Int): com.barutdev.kora.domain.model.LessonWithStudent? = error("unused")
+    override fun getActiveLessons(): Flow<List<Lesson>> = error("unused")
 }
 
 private class RecordingHomeworkRepository : HomeworkRepository {

@@ -5,12 +5,14 @@ import com.barutdev.kora.data.repository.AiRepositoryImpl
 import com.barutdev.kora.data.repository.AiInsightsGenerationTrackerImpl
 import com.barutdev.kora.data.repository.HomeworkRepositoryImpl
 import com.barutdev.kora.data.repository.LessonRepositoryImpl
+import com.barutdev.kora.data.repository.PaymentRepositoryImpl
 import com.barutdev.kora.data.repository.StudentRepositoryImpl
 import com.barutdev.kora.data.repository.UserPreferencesRepository as DataUserPreferencesRepository
 import com.barutdev.kora.domain.repository.AiInsightsCacheRepository
 import com.barutdev.kora.domain.repository.AiRepository
 import com.barutdev.kora.domain.repository.HomeworkRepository
 import com.barutdev.kora.domain.repository.LessonRepository
+import com.barutdev.kora.domain.repository.PaymentRepository
 import com.barutdev.kora.domain.repository.StudentRepository
 import com.barutdev.kora.domain.repository.UserPreferencesRepository
 import com.barutdev.kora.domain.repository.AiInsightsGenerationTracker
@@ -63,8 +65,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPaymentRepository(
-        impl: com.barutdev.kora.data.repository.PaymentRepositoryImpl
-    ): com.barutdev.kora.domain.repository.PaymentRepository
+        impl: PaymentRepositoryImpl
+    ): PaymentRepository
 
     @Binds
     @Singleton

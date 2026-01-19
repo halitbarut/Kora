@@ -6,12 +6,13 @@ import androidx.room.TypeConverters
 import com.barutdev.kora.data.local.entity.AiInsightEntity
 import com.barutdev.kora.data.local.entity.HomeworkEntity
 import com.barutdev.kora.data.local.entity.LessonEntity
+import com.barutdev.kora.data.local.entity.PaymentRecordEntity
 import com.barutdev.kora.data.local.entity.StudentEntity
 
 @Database(
-    entities = [StudentEntity::class, LessonEntity::class, HomeworkEntity::class, AiInsightEntity::class, com.barutdev.kora.data.local.entity.PaymentRecordEntity::class],
+    entities = [StudentEntity::class, LessonEntity::class, HomeworkEntity::class, AiInsightEntity::class, PaymentRecordEntity::class],
     version = 8,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(LessonStatusConverter::class, HomeworkStatusConverter::class)
 abstract class KoraDatabase : RoomDatabase() {

@@ -171,6 +171,14 @@ private class FakeLessonRepository(
     override suspend fun deleteLesson(lessonId: Int) = error("Not needed in tests")
 
     override suspend fun markCompletedLessonsAsPaid(studentId: Int) = error("Not needed in tests")
+
+    override fun getLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("Not needed in tests")
+
+    override fun getCompletedLessonsForDate(date: java.time.LocalDate): Flow<List<Lesson>> = error("Not needed in tests")
+
+    override suspend fun getLessonWithStudent(lessonId: Int): com.barutdev.kora.domain.model.LessonWithStudent? = error("Not needed in tests")
+
+    override fun getActiveLessons(): Flow<List<Lesson>> = error("Not needed in tests")
 }
 
 private class FakeUserPreferencesRepository(
