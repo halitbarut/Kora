@@ -77,8 +77,8 @@ import com.barutdev.kora.ui.screens.student_profile.EditStudentProfileScreen
 import com.barutdev.kora.util.koraStringResource
 import java.util.Locale
 
-private const val SLIDE_DURATION_MS = 240
-private const val FADE_DURATION_MS = 180
+private const val SLIDE_DURATION_MS = 350
+private const val FADE_DURATION_MS = 300
 private const val NAVIGATION_LOG_TAG = "KoraNavigation"
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -579,25 +579,29 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraEnterTransitio
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)
     return if (direction != null) {
         slideInHorizontally(
-            animationSpec = tween(durationMillis = SLIDE_DURATION_MS, easing = FastOutSlowInEasing),
+            animationSpec = tween(
+                durationMillis = SLIDE_DURATION_MS,
+                easing = FastOutSlowInEasing
+            ),
             initialOffsetX = { fullWidth ->
+                val offset = (fullWidth * 0.25f).toInt()
                 when (direction) {
-                    AnimatedContentTransitionScope.SlideDirection.Left -> fullWidth
-                    AnimatedContentTransitionScope.SlideDirection.Right -> -fullWidth
-                    else -> fullWidth
+                    AnimatedContentTransitionScope.SlideDirection.Left -> offset
+                    AnimatedContentTransitionScope.SlideDirection.Right -> -offset
+                    else -> offset
                 }
             }
         ) + fadeIn(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = LinearOutSlowInEasing
+                easing = FastOutSlowInEasing
             )
         )
     } else {
         fadeIn(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = LinearOutSlowInEasing
+                easing = FastOutSlowInEasing
             )
         )
     }
@@ -607,25 +611,29 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraExitTransition
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)
     return if (direction != null) {
         slideOutHorizontally(
-            animationSpec = tween(durationMillis = SLIDE_DURATION_MS, easing = FastOutLinearInEasing),
+            animationSpec = tween(
+                durationMillis = SLIDE_DURATION_MS,
+                easing = FastOutSlowInEasing
+            ),
             targetOffsetX = { fullWidth ->
+                val offset = (fullWidth * 0.25f).toInt()
                 when (direction) {
-                    AnimatedContentTransitionScope.SlideDirection.Left -> -fullWidth
-                    AnimatedContentTransitionScope.SlideDirection.Right -> fullWidth
-                    else -> -fullWidth
+                    AnimatedContentTransitionScope.SlideDirection.Left -> -offset
+                    AnimatedContentTransitionScope.SlideDirection.Right -> offset
+                    else -> -offset
                 }
             }
         ) + fadeOut(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = FastOutLinearInEasing
+                easing = FastOutSlowInEasing
             )
         )
     } else {
         fadeOut(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = FastOutLinearInEasing
+                easing = FastOutSlowInEasing
             )
         )
     }
@@ -635,25 +643,29 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraPopEnterTransi
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)
     return if (direction != null) {
         slideInHorizontally(
-            animationSpec = tween(durationMillis = SLIDE_DURATION_MS, easing = FastOutSlowInEasing),
+            animationSpec = tween(
+                durationMillis = SLIDE_DURATION_MS,
+                easing = FastOutSlowInEasing
+            ),
             initialOffsetX = { fullWidth ->
+                val offset = (fullWidth * 0.25f).toInt()
                 when (direction) {
-                    AnimatedContentTransitionScope.SlideDirection.Left -> fullWidth
-                    AnimatedContentTransitionScope.SlideDirection.Right -> -fullWidth
-                    else -> fullWidth
+                    AnimatedContentTransitionScope.SlideDirection.Left -> offset
+                    AnimatedContentTransitionScope.SlideDirection.Right -> -offset
+                    else -> offset
                 }
             }
         ) + fadeIn(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = LinearOutSlowInEasing
+                easing = FastOutSlowInEasing
             )
         )
     } else {
         fadeIn(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = LinearOutSlowInEasing
+                easing = FastOutSlowInEasing
             )
         )
     }
@@ -663,25 +675,29 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.koraPopExitTransit
     val direction = resolveSlideDirection(initialState.destination.route, targetState.destination.route)
     return if (direction != null) {
         slideOutHorizontally(
-            animationSpec = tween(durationMillis = SLIDE_DURATION_MS, easing = FastOutLinearInEasing),
+            animationSpec = tween(
+                durationMillis = SLIDE_DURATION_MS,
+                easing = FastOutSlowInEasing
+            ),
             targetOffsetX = { fullWidth ->
+                val offset = (fullWidth * 0.25f).toInt()
                 when (direction) {
-                    AnimatedContentTransitionScope.SlideDirection.Left -> -fullWidth
-                    AnimatedContentTransitionScope.SlideDirection.Right -> fullWidth
-                    else -> -fullWidth
+                    AnimatedContentTransitionScope.SlideDirection.Left -> -offset
+                    AnimatedContentTransitionScope.SlideDirection.Right -> offset
+                    else -> -offset
                 }
             }
         ) + fadeOut(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = FastOutLinearInEasing
+                easing = FastOutSlowInEasing
             )
         )
     } else {
         fadeOut(
             animationSpec = tween(
                 durationMillis = FADE_DURATION_MS,
-                easing = FastOutLinearInEasing
+                easing = FastOutSlowInEasing
             )
         )
     }
