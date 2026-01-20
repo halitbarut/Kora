@@ -13,6 +13,7 @@
     <string name="student_list_search_placeholder">Öğrenci ara</string>
     <string name="student_list_search_clear_content_description">Aramayı temizle</string>
     <string name="student_list_search_no_results_message">Aramanızla eşleşen öğrenci yok.</string>
+    <string name="student_list_loading">Yükleniyor…</string>
 
     <!-- Student Profile Screen -->
     <string name="student_profile_title">Öğrenci Profili</string>

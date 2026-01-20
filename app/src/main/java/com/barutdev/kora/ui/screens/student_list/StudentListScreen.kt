@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -144,6 +145,7 @@ fun StudentListScreen(
         currencyCode = userPreferences.currencyCode,
         isSearchActive = uiState.isSearchActive,
         hasAnyStudents = uiState.hasAnyStudents,
+        isLoading = uiState.isLoading,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -160,8 +162,16 @@ private fun StudentListScreenContent(
     currencyCode: String,
     isSearchActive: Boolean,
     hasAnyStudents: Boolean,
+    isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
+    if (isLoading) {
+        StudentListLoadingState(
+            modifier = modifier.fillMaxSize()
+        )
+        return
+    }
+
     if (!hasAnyStudents) {
         StudentListEmptyState(
             modifier = modifier.fillMaxSize()
@@ -263,6 +273,31 @@ private fun StudentListNoResultsState(modifier: Modifier = Modifier) {
     }
 }
 
+
+@Composable
+private fun StudentListLoadingState(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 4.dp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = koraStringResource(id = R.string.student_list_loading),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 @Composable
 private fun StudentListEmptyState(modifier: Modifier = Modifier) {
@@ -412,7 +447,8 @@ private fun StudentListScreenPreview() {
             onEditStudent = {},
             currencyCode = "TRY",
             isSearchActive = false,
-            hasAnyStudents = true
+            hasAnyStudents = true,
+            isLoading = false
         )
     }
 }
@@ -430,7 +466,8 @@ private fun StudentListEmptyScreenPreview() {
             onEditStudent = {},
             currencyCode = "TRY",
             isSearchActive = false,
-            hasAnyStudents = false
+            hasAnyStudents = false,
+            isLoading = false
         )
     }
 }

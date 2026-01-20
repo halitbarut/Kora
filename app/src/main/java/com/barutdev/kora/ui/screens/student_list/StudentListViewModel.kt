@@ -34,7 +34,8 @@ data class StudentListUiState(
     val defaultHourlyRate: Double = 0.0,
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
-    val hasAnyStudents: Boolean = false
+    val hasAnyStudents: Boolean = false,
+    val isLoading: Boolean = true
 )
 
 @HiltViewModel
@@ -96,7 +97,8 @@ class StudentListViewModel @Inject constructor(
             defaultHourlyRate = defaultHourlyRate,
             searchQuery = query,
             isSearchActive = trimmedQuery.isNotEmpty(),
-            hasAnyStudents = studentsWithDebt.isNotEmpty()
+            hasAnyStudents = studentsWithDebt.isNotEmpty(),
+            isLoading = false
         )
     }.stateIn(
         scope = viewModelScope,
