@@ -17,13 +17,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -60,6 +64,7 @@ import com.barutdev.kora.ui.theme.StatusGreen
 import com.barutdev.kora.ui.theme.StatusYellow
 import com.barutdev.kora.ui.model.AiInsightsUiState
 import com.barutdev.kora.ui.model.AiStatus
+import com.barutdev.kora.ui.components.AnimatedListItem
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -177,7 +182,6 @@ fun HomeworkScreen(
 }
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeworkScreenContent(
     modifier: Modifier = Modifier,
@@ -189,28 +193,32 @@ private fun HomeworkScreenContent(
 ) {
     val locale = LocalLocale.current
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
+        // Card 0: AI Assistant
+        AnimatedListItem(index = 0) {
             AiAssistantCard(
                 studentName = studentName,
                 aiState = aiInsightsState,
-                onGenerateAgain = onGenerateAiInsights,
-                modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
+                onGenerateAgain = onGenerateAiInsights
             )
         }
-        item {
+        
+        // Card 1: Section Title
+        AnimatedListItem(index = 1) {
             Text(
                 text = koraStringResource(id = R.string.homework_assignments_section_title),
                 style = MaterialTheme.typography.titleMedium
             )
         }
+        
         if (homeworkList.isEmpty()) {
-            item {
+            AnimatedListItem(index = 2) {
                 Text(
                     text = koraStringResource(id = R.string.homework_empty_state_message),
                     style = MaterialTheme.typography.bodyMedium,
@@ -218,13 +226,14 @@ private fun HomeworkScreenContent(
                 )
             }
         } else {
-            items(homeworkList, key = { it.id }) { homework ->
-                HomeworkListItem(
-                    homework = homework,
-                    locale = locale,
-                    onClick = onHomeworkClick,
-                    modifier = Modifier.animateItem(placementSpec = KoraAnimationSpecs.itemPlacementSpec)
-                )
+            homeworkList.forEachIndexed { listIndex, homework ->
+                AnimatedListItem(index = listIndex + 2) {
+                    HomeworkListItem(
+                        homework = homework,
+                        locale = locale,
+                        onClick = onHomeworkClick
+                    )
+                }
             }
         }
     }
@@ -247,13 +256,23 @@ private fun AiAssistantCard(
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = koraStringResource(id = R.string.homework_ai_card_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Dashboard-style header with icon
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Psychology,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = koraStringResource(id = R.string.homework_ai_card_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
             AnimatedContent(
                 targetState = aiState,
                 transitionSpec = { KoraAnimationSpecs.cardContentTransform() },
@@ -389,22 +408,30 @@ private fun HomeworkListItem(
 
 @Composable
 private fun StatusBadge(status: HomeworkStatus, modifier: Modifier = Modifier) {
-    val (labelRes, color) = when (status) {
+    val (labelRes, targetColor) = when (status) {
         HomeworkStatus.PENDING -> R.string.homework_status_pending to StatusYellow
         HomeworkStatus.COMPLETED -> R.string.homework_status_completed to StatusGreen
     }
     val text = koraStringResource(id = labelRes)
+    
+    // Animate color transitions
+    val animatedColor by androidx.compose.animation.animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150),
+        label = "statusBadgeColor"
+    )
+    
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(color.copy(alpha = 0.16f))
+            .background(animatedColor.copy(alpha = 0.16f))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            color = color
+            color = animatedColor
         )
     }
 }

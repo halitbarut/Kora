@@ -64,6 +64,7 @@ import com.barutdev.kora.ui.theme.KoraTheme
 import com.barutdev.kora.ui.theme.LocalLocale
 import com.barutdev.kora.ui.model.AiInsightsUiState
 import com.barutdev.kora.ui.model.AiStatus
+import com.barutdev.kora.ui.components.AnimatedListItem
 import com.barutdev.kora.util.formatCurrency
 import java.text.NumberFormat
 import java.time.Instant
@@ -271,39 +272,59 @@ private fun DashboardBody(
     ) {
         val noDebtMessage = koraStringResource(id = R.string.no_debt_to_pay_toast)
         val messageNotifier = LocalMessageNotifier.current
-        PaymentTrackingCard(
-            totalHours = totalHours,
-            hourlyRate = hourlyRate,
-            totalAmountDue = totalAmountDue,
-            lastPaymentDate = lastPaymentDate,
-            onMarkPaidClick = {
-                if (totalAmountDue > 0.0) {
-                    onMarkCurrentCycleAsPaid()
-                } else {
-                    messageNotifier.showMessage(noDebtMessage)
-                }
-            },
-            onShowPaymentHistory = onShowPaymentHistory,
-            currencyCode = currencyCode,
-            locale = locale
-        )
-        CompletedLessonsCard(
-            lessons = completedLessonsAwaitingPayment,
-            locale = locale
-        )
-        UpcomingLessonsCard(
-            upcomingLessons = upcomingLessons,
-            locale = locale
-        )
-        LogPastLessonsCard(
-            pastLessons = pastLessonsToLog,
-            onLessonClick = onLogLessonClick,
-            locale = locale
-        )
-        AiAssistantCard(
-            aiState = aiInsightsState,
-            onGenerateAgain = onGenerateAiInsights
-        )
+        
+        // Card 0: Payment Tracking
+        AnimatedListItem(index = 0) {
+            PaymentTrackingCard(
+                totalHours = totalHours,
+                hourlyRate = hourlyRate,
+                totalAmountDue = totalAmountDue,
+                lastPaymentDate = lastPaymentDate,
+                onMarkPaidClick = {
+                    if (totalAmountDue > 0.0) {
+                        onMarkCurrentCycleAsPaid()
+                    } else {
+                        messageNotifier.showMessage(noDebtMessage)
+                    }
+                },
+                onShowPaymentHistory = onShowPaymentHistory,
+                currencyCode = currencyCode,
+                locale = locale
+            )
+        }
+        
+        // Card 1: Completed Lessons
+        AnimatedListItem(index = 1) {
+            CompletedLessonsCard(
+                lessons = completedLessonsAwaitingPayment,
+                locale = locale
+            )
+        }
+        
+        // Card 2: Upcoming Lessons
+        AnimatedListItem(index = 2) {
+            UpcomingLessonsCard(
+                upcomingLessons = upcomingLessons,
+                locale = locale
+            )
+        }
+        
+        // Card 3: Log Past Lessons
+        AnimatedListItem(index = 3) {
+            LogPastLessonsCard(
+                pastLessons = pastLessonsToLog,
+                onLessonClick = onLogLessonClick,
+                locale = locale
+            )
+        }
+        
+        // Card 4: AI Assistant
+        AnimatedListItem(index = 4) {
+            AiAssistantCard(
+                aiState = aiInsightsState,
+                onGenerateAgain = onGenerateAiInsights
+            )
+        }
     }
 }
 

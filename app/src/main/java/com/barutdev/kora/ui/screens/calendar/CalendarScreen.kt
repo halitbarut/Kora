@@ -1,6 +1,8 @@
 package com.barutdev.kora.ui.screens.calendar
 
 import android.util.Log
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +44,7 @@ import com.barutdev.kora.util.koraStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
 import com.barutdev.kora.R
 import com.barutdev.kora.domain.model.Lesson
 import com.barutdev.kora.domain.model.LessonStatus
@@ -59,6 +62,8 @@ import com.barutdev.kora.ui.theme.StatusBlue
 import com.barutdev.kora.ui.theme.StatusGreen
 import com.barutdev.kora.ui.theme.StatusRed
 import com.barutdev.kora.ui.theme.StatusYellow
+import com.barutdev.kora.ui.theme.KoraAnimationSpecs
+import com.barutdev.kora.ui.components.AnimatedListItem
 import java.text.NumberFormat
 import java.time.DayOfWeek
 import java.time.Instant
@@ -234,23 +239,27 @@ private fun CalendarScreenContent(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        MonthlyCalendarView(
-            currentMonth = currentMonth,
-            selectedDate = selectedDate,
-            today = today,
-            onPreviousMonth = onPreviousMonth,
-            onNextMonth = onNextMonth,
-            onDaySelected = onSelectDate,
-            lessonsByDate = lessonsByDate,
-            locale = currentLocale
-        )
-        LessonDetailsSection(
-            selectedDate = selectedDate,
-            lessons = selectedDateLessons,
-            today = today,
-            locale = currentLocale,
-            onLessonActionClick = onLogLessonClick
-        )
+        AnimatedListItem(index = 0) {
+            MonthlyCalendarView(
+                currentMonth = currentMonth,
+                selectedDate = selectedDate,
+                today = today,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onDaySelected = onSelectDate,
+                lessonsByDate = lessonsByDate,
+                locale = currentLocale
+            )
+        }
+        AnimatedListItem(index = 1) {
+            LessonDetailsSection(
+                selectedDate = selectedDate,
+                lessons = selectedDateLessons,
+                today = today,
+                locale = currentLocale,
+                onLessonActionClick = onLogLessonClick
+            )
+        }
     }
 }
 
@@ -410,22 +419,42 @@ private fun CalendarDayCell(
     modifier: Modifier = Modifier
 ) {
     val shape = MaterialTheme.shapes.medium
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-    } else {
-        Color.Transparent
-    }
-    val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    
+    // Animated background color
+    val animatedBackgroundColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150),
+        label = "dayCellBackground"
+    )
+    
+    // Animated text color
+    val animatedTextColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150),
+        label = "dayCellText"
+    )
+    
+    // Scale animation for selection
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = KoraAnimationSpecs.pressSpec,
+        label = "dayCellScale"
+    )
 
     Box(
         modifier = modifier
             .aspectRatio(1f)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(shape)
-            .background(backgroundColor)
+            .background(animatedBackgroundColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -436,7 +465,7 @@ private fun CalendarDayCell(
             Text(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyLarge,
-                color = textColor,
+                color = animatedTextColor,
                 textAlign = TextAlign.Center
             )
             if (indicatorColor != null) {

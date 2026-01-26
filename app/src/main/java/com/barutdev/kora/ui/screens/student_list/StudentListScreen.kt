@@ -1,5 +1,6 @@
 package com.barutdev.kora.ui.screens.student_list
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +44,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +63,9 @@ import com.barutdev.kora.ui.navigation.TopBarConfig
 import com.barutdev.kora.ui.navigation.TopBarAction as NavigationTopBarAction
 import com.barutdev.kora.ui.preferences.LocalUserPreferences
 import com.barutdev.kora.ui.theme.KoraTheme
+import com.barutdev.kora.ui.theme.KoraAnimationSpecs
+import com.barutdev.kora.ui.components.KoraSkeletonCard
+import com.barutdev.kora.ui.components.AnimatedListItem
 import com.barutdev.kora.util.formatCurrency
 import com.barutdev.kora.util.koraStringResource
 import java.util.Locale
@@ -203,17 +209,19 @@ private fun StudentListScreenContent(
                 )
             }
         } else {
-            items(
+            itemsIndexed(
                 items = students,
-                key = { it.student.id }
-            ) { studentWithDebt ->
-                StudentListItem(
-                    student = studentWithDebt,
-                    currencyCode = currencyCode,
-                    onStudentClick = onStudentClick,
-                    onEditClick = onEditStudent,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                key = { _, studentWithDebt -> studentWithDebt.student.id }
+            ) { index, studentWithDebt ->
+                AnimatedListItem(index = index + 1) {
+                    StudentListItem(
+                        student = studentWithDebt,
+                        currencyCode = currencyCode,
+                        onStudentClick = onStudentClick,
+                        onEditClick = onEditStudent,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -276,24 +284,21 @@ private fun StudentListNoResultsState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun StudentListLoadingState(modifier: Modifier = Modifier) {
-    Box(
+    LazyColumn(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp
+        items(5) { index ->
+            val animatedAlpha by animateFloatAsState(
+                targetValue = 1f,
+                animationSpec = KoraAnimationSpecs.fadeInSpec,
+                label = "skeleton$index"
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = koraStringResource(id = R.string.student_list_loading),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            KoraSkeletonCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { alpha = animatedAlpha }
             )
         }
     }
